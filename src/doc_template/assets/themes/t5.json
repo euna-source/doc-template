@@ -1,0 +1,32 @@
+{
+ "meta": {
+  "name": "T5 · 『&Premium 京都』 · 若草 × 生成り",
+  "books": [
+   "t18",
+   "t24"
+  ],
+  "note": "연둣빛 풀색 띠와 크림 지도, 옅은 올리브 회색. 『なみのいちにち』의 연한 물빛·풀빛도 같은 결입니다. 서가에서 두 번째로 많은 초록 계열을 밝고 싱그럽게 씁니다."
+ },
+ "light": {
+  "bg": "#F8F8EE",
+  "panel": "#EEEFDF",
+  "line": "#D3D5BF",
+  "text": "#1F2419",
+  "muted": "#555B4B",
+  "accent": "#4A7316",
+  "mark": "#CBE58A",
+  "marktext": "#1F2419",
+  "link": "#2A5DA0"
+ },
+ "dark": {
+  "bg": "#171915",
+  "panel": "#20231D",
+  "line": "#383D32",
+  "text": "#EFF1E6",
+  "muted": "#AEB3A3",
+  "accent": "#A9D34A",
+  "mark": "#A9D34A",
+  "marktext": "#171915",
+  "link": "#A9C4FF"
+ }
+}

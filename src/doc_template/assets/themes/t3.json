@@ -1,0 +1,31 @@
+{
+ "meta": {
+  "name": "T3 · 『世界』(junaida) · 白 × 朱 한 색",
+  "books": [
+   "t23"
+  ],
+  "note": "흰 바탕에 빨간 왕관 하나. 서가에서 가장 선명한 주홍(#E32F12)을 한 색만 씁니다. 강조 면도 주홍을 옅게 푼 색이고, 링크는 먹색 밑줄로 둡니다. 가장 대담한 1도 안입니다."
+ },
+ "light": {
+  "bg": "#FEFDFA",
+  "panel": "#F4F1EC",
+  "line": "#DCD7CF",
+  "text": "#1D1B19",
+  "muted": "#5A5652",
+  "accent": "#C8290F",
+  "mark": "#FFC9B8",
+  "marktext": "#1D1B19",
+  "link": "#1D1B19"
+ },
+ "dark": {
+  "bg": "#161514",
+  "panel": "#211F1D",
+  "line": "#3B3835",
+  "text": "#F2EFEA",
+  "muted": "#ACA7A0",
+  "accent": "#FF6A4D",
+  "mark": "#FF6A4D",
+  "marktext": "#161514",
+  "link": "#F2EFEA"
+ }
+}

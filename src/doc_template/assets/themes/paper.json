@@ -1,0 +1,28 @@
+{
+ "meta": {
+  "name": "종이·먹 (v1 기본)",
+  "note": "일본 책 조사 1차에서 정한 기본 배색"
+ },
+ "light": {
+  "bg": "#F6F3EB",
+  "panel": "#EEECE2",
+  "line": "#CECEC3",
+  "text": "#252621",
+  "muted": "#5D6059",
+  "accent": "#B73921",
+  "mark": "#F4D43D",
+  "marktext": "#252621",
+  "link": "#1957B8"
+ },
+ "dark": {
+  "bg": "#151A1F",
+  "panel": "#1E252C",
+  "line": "#34404B",
+  "text": "#E9E7E0",
+  "muted": "#A4AAB0",
+  "accent": "#FF7A55",
+  "mark": "#E8C547",
+  "marktext": "#151A1F",
+  "link": "#A9C4FF"
+ }
+}

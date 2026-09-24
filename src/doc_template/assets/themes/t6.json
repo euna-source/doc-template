@@ -1,0 +1,31 @@
+{
+ "meta": {
+  "name": "T6 · 『いろいろ色のはじまり』 · 黄 · 赤 · 紺 삼색",
+  "books": [
+   "t11"
+  ],
+  "note": "노랑·빨강·남색 세 색면이 사선으로 만나는 과학 그림책 표지. 세 역할(강조·절 번호·링크)을 이 세 색에 하나씩 맡깁니다. 가장 또렷하고 구조적인 안입니다."
+ },
+ "light": {
+  "bg": "#FBF8F0",
+  "panel": "#F1ECDF",
+  "line": "#D9D1BE",
+  "text": "#1F2130",
+  "muted": "#555766",
+  "accent": "#BF2F36",
+  "mark": "#FAC85F",
+  "marktext": "#1F2130",
+  "link": "#253472"
+ },
+ "dark": {
+  "bg": "#1C1E29",
+  "panel": "#262937",
+  "line": "#3D4153",
+  "text": "#F2EFE6",
+  "muted": "#B0B2C0",
+  "accent": "#FF6B6E",
+  "mark": "#FAC85F",
+  "marktext": "#1C1E29",
+  "link": "#A9B8FF"
+ }
+}

@@ -1,0 +1,31 @@
+{
+ "meta": {
+  "name": "T2 · 『する、しない。』 · 黄 한 면",
+  "books": [
+   "t28"
+  ],
+  "note": "표지 절반을 덮는 부드러운 노랑과 흰 여백, 작은 갈색 글씨가 전부인 표지. 문서에서는 노랑을 강조 면으로, 표지 글씨의 갈색을 절 번호로 씁니다. 가장 밝고 편안합니다."
+ },
+ "light": {
+  "bg": "#FCFAF5",
+  "panel": "#F3EFE4",
+  "line": "#DDD6C4",
+  "text": "#26231D",
+  "muted": "#5E574A",
+  "accent": "#7D5E30",
+  "mark": "#F7EA5E",
+  "marktext": "#26231D",
+  "link": "#2B5E9A"
+ },
+ "dark": {
+  "bg": "#1B1A16",
+  "panel": "#25231E",
+  "line": "#3E3B33",
+  "text": "#F3EFE3",
+  "muted": "#B5AEA0",
+  "accent": "#E6C37A",
+  "mark": "#F7EA5E",
+  "marktext": "#1B1A16",
+  "link": "#A9C4FF"
+ }
+}

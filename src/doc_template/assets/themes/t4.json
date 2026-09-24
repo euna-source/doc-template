@@ -1,0 +1,31 @@
+{
+ "meta": {
+  "name": "T4 · 『信号旗K』(岡崎真理子) · 灰茶 × 朱",
+  "books": [
+   "t31"
+  ],
+  "note": "따뜻한 회갈색(灰茶) 바탕 위에 주홍 띠와 사진. 흰 종이 대신 색 있는 종이 같은 바탕이 특징입니다. 문서도 바탕을 한 단계 어둡게 깔아 종이의 질감을 냅니다."
+ },
+ "light": {
+  "bg": "#ECEAE3",
+  "panel": "#E0DDD4",
+  "line": "#C6C2B6",
+  "text": "#232220",
+  "muted": "#55524B",
+  "accent": "#A8402A",
+  "mark": "#F2C3AE",
+  "marktext": "#232220",
+  "link": "#2F5C8A"
+ },
+ "dark": {
+  "bg": "#211F1C",
+  "panel": "#2B2925",
+  "line": "#45413B",
+  "text": "#EFECE5",
+  "muted": "#B2ACA2",
+  "accent": "#F0876B",
+  "mark": "#E9A38B",
+  "marktext": "#211F1C",
+  "link": "#9FC0EE"
+ }
+}

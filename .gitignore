@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+out/
+*.html
+!src/doc_template/assets/*.html
+.DS_Store
