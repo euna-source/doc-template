@@ -255,6 +255,9 @@ mark a{color:inherit;text-decoration-color:currentColor}
   .table.stack tr.pick td:first-child{box-shadow:none;padding-left:0}
   .table.stack tr.pick{box-shadow:inset var(--rule) 0 0 var(--accent);padding-left:14px}
   .table.stack .num{text-align:left}
+  /* 두 칸 표(항목 | 내용)는 이름표가 매 행 같은 말이라 빼고 내용을 전체 폭으로 */
+  .table.stack tr:has(> td:nth-child(2):last-child) td{padding-left:0}
+  .table.stack tr:has(> td:nth-child(2):last-child) td::before{display:none}
   /* 비교표 → 가로 스크롤 + 첫 열 고정 */
   .table.compare table{min-width:520px}
   .table.compare :is(th,td):first-child{position:sticky;left:0;background:var(--bg);z-index:1;box-shadow:1px 0 0 var(--line)}
