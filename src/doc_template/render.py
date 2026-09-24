@@ -243,6 +243,7 @@ def render(md_text, theme=None, template=None, canonical=None):
     out = tpl
     for k, v in repl.items():
         out = out.replace(k, v)
+    out = '\n'.join(line.rstrip() for line in out.split('\n'))
     return out, {'theme': theme_spec, 'sections': n, 'contrast_min': min(r[3] for r in audit(th)),
                  'contrast_fail': [r for r in audit(th) if r[3] < 4.5]}
 
