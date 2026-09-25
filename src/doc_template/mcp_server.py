@@ -10,7 +10,7 @@ from .themes_list import all_themes, describe
 from .themes import ROOT
 from .lint import review
 
-mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → list_themes에서 색을 골라 render_document. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
+mcp = _Server('doc-template', instructions='기획·리서치·일정표·목록 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 독자가 위에서 아래로 읽으면 plan/research, 기간을 훑고 날짜로 찾아가면 schedule, 조건으로 걸러 찾으면 catalog(get_starter kind로 뼈대). 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → list_themes에서 색을 골라 render_document. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
 OUT = Path(os.environ.get('DOC_TEMPLATE_OUT', Path.home() / 'Documents' / 'doc-template'))
 
 @mcp.tool()
@@ -30,9 +30,9 @@ def review_document(markdown: str) -> dict:
 
 @mcp.tool()
 def get_starter(kind: str = 'plan') -> str:
-    """시작 문서(Markdown)와 문법. kind: plan(기획) | research(리서치). 머리말의 theme 한 줄로 색을 고른다."""
-    if kind not in ('plan', 'research'):
-        raise ValueError("kind는 plan 또는 research")
+    """시작 문서(Markdown)와 문법. kind: plan(기획 전달, 위에서 아래로 읽는다) | research(리서치) | schedule(일정표: 국면·2주 달력·운영 흐름과 부스팅 두 열·서랍) | catalog(목록·필터: 항목 N개를 필터 줄이 고정된 표로). 머리말의 theme 한 줄로 색을 고른다."""
+    if kind not in ('plan', 'research', 'schedule', 'catalog'):
+        raise ValueError("kind는 plan · research · schedule · catalog")
     return (ROOT / 'starters' / f'{kind}.md').read_text(encoding='utf-8')
 
 @mcp.tool()

@@ -119,7 +119,8 @@
     const max = root.scrollHeight - innerHeight;
     if (bar) bar.style.width = (max > 0 ? Math.min(1, Math.max(0, scrollY / max)) * 100 : 0) + '%';
     if (!sections.length) return;
-    const line = parseFloat(getComputedStyle(root).getPropertyValue('--header-h')) + 80;
+    const cs = getComputedStyle(root);
+    const line = parseFloat(cs.getPropertyValue('--header-h')) + (parseFloat(cs.getPropertyValue('--band-h')) || 0) + 80;
     let current = sections[0];
     for (const s of sections) if (s.getBoundingClientRect().top <= line) current = s;
     if (innerHeight + scrollY >= root.scrollHeight - 4) current = sections[sections.length - 1];
@@ -145,7 +146,7 @@
   ['wheel', 'touchstart', 'keydown'].forEach((ev) => addEventListener(ev, cancelSettle, { passive: true }));
   const settle = (id) => {
     const el = id && document.getElementById(id);
-    if (!el) return;
+    if (!el || el.closest('.drawer')) return;  // 서랍 안은 서랍이 따로 연다
     const mine = ++navId;
     let done = false;
     const fix = () => {
@@ -197,6 +198,219 @@
   let closedForPrint = [];
   addEventListener('beforeprint', () => { closedForPrint = $$('details:not([open])'); closedForPrint.forEach((d) => { d.open = true; }); });
   addEventListener('afterprint', () => { closedForPrint.forEach((d) => { d.open = false; }); closedForPrint = []; });
+
+  // 고정 달력 띠 높이 → 앵커 이동 여백(--band-h)
+  const band = $('#calband');
+  if (band) {
+    const setBand = () => root.style.setProperty('--band-h', band.getBoundingClientRect().height + 'px');
+    setBand();
+    if ('ResizeObserver' in window) new ResizeObserver(setBand).observe(band); else addEventListener('resize', setBand);
+  }
+
+  // 오늘: 달력 칸·국면 카드에 표시(보는 사람 기기의 날짜)
+  const pad = (n) => String(n).padStart(2, '0');
+  const now = new Date();
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const td = $(`.day[data-date="${today}"]`);
+  if (td) { td.classList.add('today'); td.setAttribute('aria-current', 'date'); td.setAttribute('aria-label', `오늘, ${td.textContent.trim()}`); }
+  $$('.phase-card[data-start], .pn[data-start]').forEach((el) => {
+    const a = el.dataset.start, b = el.dataset.end;
+    if (a && b && a <= today && today <= b) {
+      el.classList.add('now');
+      const tag = $('.pc-now', el); if (tag) tag.hidden = false;
+    }
+  });
+  // 오늘이 달력 안이면 그 칸이 보이게 가로 스크롤
+  if (td) { const cal = td.closest('.calgrid'); if (cal) cal.scrollLeft = td.offsetLeft - cal.clientWidth / 2 + td.clientWidth / 2; }
+  // 오늘이 달력 밖이면 범례에 며칠 앞·뒤인지 적는다
+  const days = $$('.day[data-date]');
+  if (days.length && !td) {
+    const first = days[0].dataset.date, last = days[days.length - 1].dataset.date;
+    const diff = (a, b) => Math.round((new Date(a) - new Date(b)) / 864e5);
+    const lg = $('.cal-legend');
+    const md = `${now.getMonth() + 1}/${now.getDate()}`;
+    const msg = today < first ? `오늘(${md})은 달력 시작 ${diff(first, today)}일 전` : today > last ? `오늘(${md})은 달력 끝 ${diff(today, last)}일 뒤` : '';
+    if (lg && msg) { const s = document.createElement('span'); s.className = 'lg-away'; s.textContent = msg; lg.prepend(s); }
+    $('.lg.today')?.classList.add('absent');
+  }
+  // 읽는 위치를 따라 날짜 칸을 표시하고 달력 줄을 그 칸으로 민다(휴대폰에서 줄이 멈춰 있지 않게)
+  const tlRows = $$('.tl-row[id^="d"]');
+  if (tlRows.length && days.length) {
+    const byId = {}; days.forEach((d) => { const h = d.getAttribute('href'); if (h) (byId[h.slice(1)] = byId[h.slice(1)] || []).push(d); });
+    let last = '';
+    const spy = () => {
+      const line = parseFloat(getComputedStyle(root).getPropertyValue('--header-h')) + (parseFloat(getComputedStyle(root).getPropertyValue('--band-h')) || 0) + 40;
+      let curRow = null;
+      for (const r of tlRows) { if (r.getBoundingClientRect().top <= line) curRow = r; else break; }
+      const id = curRow ? curRow.id : '';
+      if (id === last) return; last = id;
+      $$('.day.reading').forEach((x) => x.classList.remove('reading'));
+      const hit = byId[id] || [];
+      hit.forEach((x) => x.classList.add('reading'));
+      if (hit[0]) { const g = hit[0].closest('.calgrid'); if (g) g.scrollTo({ left: hit[0].offsetLeft - 8, behavior: 'smooth' }); }
+    };
+    let t2 = 0; addEventListener('scroll', () => { cancelAnimationFrame(t2); t2 = requestAnimationFrame(spy); }, { passive: true });
+  }
+  // 누른 날짜 칸 표시
+  document.addEventListener('click', (e) => {
+    const d = e.target.closest('.day');
+    if (d) { $$('.day.sel').forEach((x) => x.classList.remove('sel')); d.classList.add('sel'); }
+  });
+
+  // 레이어(서랍): 버튼·목차·절 링크로 연다. Esc·바깥·닫기로 닫고, 연 자리로 초점을 돌린다
+  const drawerBg = $('#drawer-bg');
+  let openDrawer = null, opener = null;
+  const closeLayer = () => {
+    if (!openDrawer) return;
+    openDrawer.hidden = true; if (drawerBg) drawerBg.hidden = true;
+    document.body.classList.remove('drawer-open');
+    openDrawer = null;
+    if (opener && opener.focus) opener.focus();
+  };
+  const openLayer = (id, from) => {
+    const d = document.getElementById(id);
+    if (!d || !d.classList.contains('drawer')) return false;
+    if (openDrawer && openDrawer !== d) { openDrawer.hidden = true; }
+    opener = from || document.activeElement;
+    d.hidden = false; if (drawerBg) drawerBg.hidden = false;
+    document.body.classList.add('drawer-open');
+    openDrawer = d;
+    $('.drawer-body', d).scrollTop = 0;
+    $('.drawer-close', d).focus();
+    return true;
+  };
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-layer]');
+    if (b) { e.preventDefault(); openLayer(b.dataset.layer, b); return; }
+    const a = e.target.closest('a[href^="#"]');
+    if (a && a.hash.length > 1) {
+      const id = hashId(a.hash);
+      const target = document.getElementById(id);
+      if (target && target.classList.contains('drawer')) { e.preventDefault(); openLayer(id, a); return; }
+      // 레이어 안에서 본문으로 가는 링크: 레이어를 닫고 이동
+      const inDrawer = target ? target.closest('.drawer') : null;
+      if (openDrawer && !inDrawer && a.closest('.drawer')) closeLayer();
+      if (inDrawer && target !== inDrawer) { e.preventDefault(); if (inDrawer !== openDrawer) openLayer(inDrawer.id, a); const dt = target.closest('details'); if (dt) dt.open = true; target.scrollIntoView({ block: 'start' }); }
+    }
+    if (e.target.closest('.drawer-close') || e.target === drawerBg) closeLayer();
+  });
+  addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && openDrawer) { closeLayer(); return; }
+    if (e.key === 'Tab' && openDrawer) {   // 초점을 서랍 안에 가둔다
+      const f = $$('a[href],button,[tabindex]:not([tabindex="-1"]),summary', openDrawer).filter((x) => x.offsetParent !== null);
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+  });
+  if (location.hash) {
+    const id = hashId(location.hash); const t0 = document.getElementById(id);
+    const d0 = t0 && (t0.classList.contains('drawer') ? t0 : t0.closest('.drawer'));
+    if (d0) { openLayer(d0.id); if (t0 !== d0) { const dt = t0.closest('details'); if (dt) dt.open = true; t0.scrollIntoView({ block: 'start' }); } }
+  }
+
+  // 탭
+  $$('.tabs').forEach((box) => {
+    const tabs = $$('[role="tab"]', box);
+    const pick = (t) => tabs.forEach((x) => {
+      const on = x === t;
+      x.setAttribute('aria-selected', String(on)); x.tabIndex = on ? 0 : -1;
+      document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+    });
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => pick(t));
+      t.addEventListener('keydown', (e) => {
+        const k = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        const n = k ? tabs[(i + k + tabs.length) % tabs.length] : e.key === 'Home' ? tabs[0] : e.key === 'End' ? tabs[tabs.length - 1] : null;
+        if (n) { e.preventDefault(); pick(n); n.focus(); }
+      });
+    });
+  });
+
+  // 목록·필터형: 필터 줄(고정)·검색·건수·핵심 열만·그룹 접기
+  const catbar = $('#catbar');
+  const catTable = $('table.cat');
+  if (catbar && catTable) {
+    const setBar = () => root.style.setProperty('--catbar-h', catbar.getBoundingClientRect().height + 'px');
+    setBar();
+    if ('ResizeObserver' in window) new ResizeObserver(setBar).observe(catbar);
+    const rows = $$('tr.row', catTable);
+    const grps = $$('tr.grp', catTable);
+    rows.forEach((r) => { r._t = r.textContent.toLowerCase(); });
+    const groups = $$('.fgroup', catbar);
+    const q = $('#cat-q');
+    const openGroups = new Set(), closedGroups = new Set();   // 처음 접힌 그룹을 편 것 / 손으로 접은 것
+    const matchOpt = (r, field, v) => {
+      const t = r.getAttribute('data-f-' + field) || '';
+      if (v === 'all') return true;
+      if (v === 'any') return t.trim() !== '' && t.trim() !== '—';
+      return v.split('|').some((p) => p && (p.startsWith('^') ? t.trim().startsWith(p.slice(1)) : t.includes(p)));  // ^는 '로 시작'
+    };
+    const cur = () => groups.map((g) => [g.dataset.field, ($('button[aria-pressed="true"]', g) || {}).dataset?.v || 'all']);
+    // 선택지마다 건수(다른 필터와 상관없이)
+    groups.forEach((g) => $$('button[data-v]', g).forEach((b) => {
+      const n = $('.n', b); if (n) n.textContent = rows.filter((r) => matchOpt(r, g.dataset.field, b.dataset.v)).length;
+    }));
+    const apply = () => {
+      const sel = cur();
+      const query = (q && q.value.trim().toLowerCase()) || '';
+      const per = {};
+      let shown = 0;
+      rows.forEach((r) => {
+        let ok = sel.every(([f, v]) => matchOpt(r, f, v)) && (!query || r._t.includes(query));
+        const g = document.getElementById(r.dataset.g);
+        const folded = g && !query && (closedGroups.has(g.id) || (g.dataset.fold === '1' && !openGroups.has(g.id) && !sel.some(([f, v]) => v !== 'all' && v !== 'any' && matchOpt(r, f, v))));
+        per[r.dataset.g] = (per[r.dataset.g] || 0) + (ok ? 1 : 0);
+        if (ok) shown++;
+        r.classList.toggle('hidden', !ok || folded);
+      });
+      grps.forEach((g) => {
+        const n = per[g.id] || 0, c = $('.gcount', g), tot = +c.dataset.total;
+        const folded = !query && (closedGroups.has(g.id) || (g.dataset.fold === '1' && !openGroups.has(g.id)));
+        c.textContent = folded ? `${tot}행 · 접힘` : n === tot ? `${tot}행` : `${n} / ${tot}행`;
+        g.classList.toggle('folded', folded);
+        $('.gtog', g).setAttribute('aria-expanded', String(!folded));
+        g.classList.toggle('hidden', n === 0 && !folded);
+        const chip = $(`.gchip[data-g="${g.id}"]`); if (chip) chip.classList.toggle('empty', n === 0);
+      });
+      const cnt = $('#cat-count'); if (cnt) cnt.textContent = `표시 ${shown} / ${rows.length}행`;
+      const tg = $('#cat-ftoggle');
+      if (tg) { const active = sel.filter(([, v], i) => v !== groups[i].dataset.default).length; tg.textContent = active ? `필터 · ${active}` : '필터'; }
+    };
+    groups.forEach((g) => g.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-v]'); if (!b) return;
+      $$('button[data-v]', g).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      apply();
+    }));
+    const reset = () => {
+      groups.forEach((g) => $$('button[data-v]', g).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === g.dataset.default))));
+      if (q) q.value = ''; openGroups.clear(); closedGroups.clear(); apply();
+    };
+    $('#cat-reset')?.addEventListener('click', reset);
+    q?.addEventListener('input', apply);
+    catTable.addEventListener('click', (e) => {
+      const t = e.target.closest('.gtog'); if (!t) return;
+      const g = t.closest('tr.grp');
+      if (g.classList.contains('folded')) { closedGroups.delete(g.id); if (g.dataset.fold === '1') openGroups.add(g.id); }
+      else if (g.dataset.fold === '1' && openGroups.has(g.id)) openGroups.delete(g.id);
+      else closedGroups.add(g.id);
+      apply();
+    });
+    const more = $('#cat-more');
+    more?.addEventListener('click', () => {
+      const on = document.body.classList.toggle('cat-core');
+      more.setAttribute('aria-pressed', String(on));
+      $$('tr.hg th[data-span]', catTable).forEach((th) => { th.colSpan = on ? +th.dataset.spanCore || 1 : +th.dataset.span; });
+    });
+    const ft = $('#cat-ftoggle');
+    ft?.addEventListener('click', () => { const o = catbar.classList.toggle('open'); ft.setAttribute('aria-expanded', String(o)); });
+    // 그룹 칩: 접힌 그룹이면 펼치고 그 줄로
+    $$('.gchip', catbar).forEach((c) => c.addEventListener('click', () => {
+      const g = document.getElementById(c.dataset.g);
+      if (g && g.dataset.fold === '1') { openGroups.add(g.id); apply(); }
+    }));
+    apply();
+  }
 
   // 모바일 목차: 항목을 누르면 접는다
   const tocMobile = $('.toc-mobile');

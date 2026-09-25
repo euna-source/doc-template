@@ -14,7 +14,7 @@ def raises(fn):
     except Exception: return True
 md = "---\ntitle: <script>alert(1)</script>\nobi:\n  text: <img src=x onerror=alert(2)>\n---\n## <img src=x onerror=alert(3)> | <b>x</b>\n\n본문 <script>alert(4)</script> [링크](javascript:alert(5))\n"
 html, _ = render(md)
-body = html.split('<body>', 1)[1].split('<script>\n', 1)[0]
+body = html.split('<body', 1)[1].split('>', 1)[1].split('<script>\n', 1)[0]
 expect('주입: script 태그 없음', '<script>alert' not in body)
 expect('주입: img 태그 실행 없음', '<img src=x' not in body and '<b>x</b>' not in body)
 expect('주입: javascript 링크 없음', 'href="javascript:' not in body)
@@ -47,7 +47,7 @@ expect('결정: 관련 절 링크', '<a class="xref" href="#s1">선정 기준</a
 expect('결정: 없는 절은 글자만', '없는 절' in dh and '[[#' not in dh)
 expect('결정: 절 머리 표시', '<a class="sec-pending" href="#d1">정할 것 1</a>' in dh)
 expect('결정: 관련 줄 분리', '<p class="rel">관련:' in dh)
-expect('결정: 주입 없음', '<img src=x' not in dh.split('<body>', 1)[1])
+expect('결정: 주입 없음', '<img src=x' not in dh.split('<body', 1)[1].split('>', 1)[1])
 xm = ("## R&D | 연구 개발을 말한다\n\n본문 [[#R&D]] 과 [[#R&D 폐기안]]\n\n```\n[[#R&D]]\n```\n\n## 선정 기준 | 무엇으로 뽑나를 말한다\n\n[[#선정]]\n")
 xh, _ = render(xm)
 expect('링크: 특수문자 절', '<a class="xref" href="#s1">R&amp;D</a>' in xh)
@@ -78,4 +78,27 @@ lint_ids = {i['id'] for i in review("## 배경 | 왜 필요한가를 말한다\n
 expect('구조: 이름표 흩어짐 경고', 'inline-tags' in lint_ids)
 expect('구조: 제삼자 말투 제안', 'narrator' in lint_ids)
 expect('구조: 대안 판정 이름표는 허용', 'inline-tags' not in {i['id'] for i in review('## 대안 | 둘 중 B를 고른다\n\n| 안 | 판단 |\n|---|---|\n| B | {{추천}} |\n')['issues']})
+# 일정표형: 국면·달력·두 열·서랍·변경 비교(꼬리 보존)·주입 차단
+from doc_template import components as C
+sm = (ROOT_ := Path(__file__).resolve().parents[1] / 'src/doc_template/assets/starters/schedule.md').read_text()
+sh, _ = render(sm)
+expect('일정: 날짜 칸 16개', sh.count('class="day') == 16)
+expect('일정: 날짜 칸이 흐름 줄로', 'href="#d1007" data-date="2026-10-08"' in sh and 'id="d1006"' in sh)
+expect('일정: 두 열', sh.count('class="col col-timeline"') == 2 and sh.count('class="col col-cards"') == 2)
+expect('일정: 서랍 2개와 버튼', sh.count('class="drawer"') == 2 and 'data-layer="' in sh)
+expect('일정: 신호 카드 모양', 'class="card core"' in sh and 'class="card warn"' in sh and 'class="card red"' in sh)
+xh, _ = render("---\ntemplate: schedule\n---\n## 가 | 결론 문장입니다\n\n> [!note]- 1\n> - **곳**: 이전 「<img src=x onerror=alert(1)>A」 → 이후 「B」 (꼬리 말)\n")
+expect('일정: 비교 꼬리 보존', '꼬리 말' in xh and 'class="chg"' in xh)
+expect('일정: 비교 주입 없음', '<img src=x' not in xh.split('<body', 1)[1])
+expect('일정: 겹친 괄호', C._split_pair('이전 「A 「x」 B」 → 이후 「C」 끝')[1:] == ('A 「x」 B', 'C', ' 끝'))
+# 목록형: 표·필터 속성·접힘·열 묶음·주입
+cm = (Path(__file__).resolve().parents[1] / 'src/doc_template/assets/starters/catalog.md').read_text()
+ch, _ = render(cm)
+expect('목록: 행 2개', ch.count('<tr class="row') == 2)
+expect('목록: 필터 속성', 'data-f-묶음="현행"' in ch and 'data-field="갱신"' in ch)
+expect('목록: 보관 그룹 없음 → 접힘 아님', 'data-fold="0"' in ch)
+expect('목록: 열 묶음 머리줄', 'class="hg"' in ch and 'data-span-core=' in ch)
+expect('목록: 열 설명 버튼이 서랍으로', 'class="qh" data-layer="' in ch)
+ih, _ = render("---\ntemplate: catalog\ncatalog: {section: 목록, columns: [내용]}\n---\n## 목록 | 목록\n\n### 01 그룹\n\n#### #1 <script>x</script>\n\n- 내용: <img src=x onerror=alert(2)>\n")
+expect('목록: 주입 없음', '<script>x' not in ih.split('<body', 1)[1].split('<script>\n', 1)[0] and '<img src=x' not in ih)
 print('fails:', fails or 0); sys.exit(1 if fails else 0)

@@ -138,5 +138,9 @@ def review(md_text):
         if h.split('|')[0].strip() in ('부록',):
             add('appendix-content', '경고', '부록', '본문이 아닌 문안·상세가 부록에 있습니다.', '다른 독자를 위한 내용은 별도 문서로 옮기세요.')
 
+    if str(fm.get('template', '')) in ('schedule', 'catalog'):
+        # 찾아보는 유형: 결론 띠지·절 분량·표 행 수 같은 읽기형 규칙은 맞지 않는다
+        keep = {'inline-tags', 'narrator', 'meta-reader', 'frontmatter', 'head-missing'}
+        issues = [i for i in issues if i['id'] in keep]
     score = max(0, 100 - 8 * sum(i['level'] == '경고' for i in issues) - 3 * sum(i['level'] == '제안' for i in issues))
     return {'score': score, 'body_chars': total, 'sections': len(main), 'issues': issues}

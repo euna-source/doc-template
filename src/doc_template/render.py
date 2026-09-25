@@ -25,6 +25,8 @@ from mdit_py_plugins.front_matter import front_matter_plugin
 from bs4 import BeautifulSoup
 from .themes import resolve, css_vars, audit
 from .lint import review
+from . import components as C
+from . import catalog as K
 
 ROOT = Path(__file__).resolve().parent / 'assets'
 TPL = ROOT
@@ -36,10 +38,11 @@ ICONS = {
     'unknown': '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4"/><path d="M12 16.8v.2"/></svg>',
     'decide': '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
 }
+ICONS['rule'] = ICONS['note']
 CALLOUT_ALIAS = {'note': 'note', 'info': 'note', 'tip': 'note', 'caution': 'caution', 'warning': 'caution',
                  'danger': 'caution', 'unknown': 'unknown', 'question': 'unknown', 'todo': 'unknown',
-                 'decide': 'decide', 'decision': 'decide'}
-CALLOUT_LABEL = {'note': '참고', 'caution': '주의', 'unknown': '미확인', 'decide': '정할 것'}
+                 'decide': 'decide', 'decision': 'decide', 'rule': 'rule'}
+CALLOUT_LABEL = {'note': '참고', 'caution': '주의', 'unknown': '미확인', 'decide': '정할 것', 'rule': '규칙'}
 STATE = {'확인': 'full', '일부': 'half', '미확인': ''}
 STATUS = {'draft': ('', '초안'), 'review': ('half', '검토 중'), 'done': ('full', '확정')}
 CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="m2.5 6.2 2.3 2.3 4.7-5"/></svg>'
@@ -137,6 +140,12 @@ def _transform_blocks(soup, fm):
                     new['id'] = f'd{len(decides)}'
                     num = f'<span class="dn">{len(decides):02d}</span>'
                     head = num + f'<span class="dq">{title}</span>'
+                elif kind == 'rule':
+                    # '이름 | 표시 | 한 줄 요약' → 규칙 카드 머리
+                    parts = [x.strip() for x in title.split(' | ')]
+                    name_, sum_ = parts[0], parts[-1] if len(parts) > 1 else ''
+                    tags_ = ''.join(f'<span class="rtag">{t}</span>' for t in parts[1:-1] for t in [x.strip() for x in t.split(',')] if t)
+                    head = f'<span class="rname">{name_}</span>{f"<span class=rtags>{tags_}</span>" if tags_ else ""}<span class="rsum">{sum_}</span>'
                 else:
                     head = ICONS[kind] + f'<span class="dq">{title}</span>'
                 new.append(BeautifulSoup(f'<summary class="callout-label">{head}</summary>', 'html.parser'))
@@ -172,6 +181,8 @@ def _transform_blocks(soup, fm):
             bq.replace_with(BeautifulSoup(f'<blockquote class="pull">{inner}{f"<cite>{cite}</cite>" if cite else ""}</blockquote>', 'html.parser'))
     # 표 → 카드 표, 추천 행
     for tb in soup.find_all('table'):
+        if 'cat' in (tb.get('class') or []):   # 목록·필터형 표는 따로 그린다
+            continue
         for tr in tb.find_all('tr'):
             td = tr.find('td')
             if td and td.get_text().strip().startswith('★'):
@@ -216,7 +227,7 @@ def _transform_blocks(soup, fm):
     for img in soup.find_all('img'):
         p = img.parent
         cap = img.get('title', '')
-        fig = f'<figure class="figure"><img src="{esc(img["src"])}" alt="{esc(img.get("alt", ""))}" decoding="async">{f"<figcaption>{esc(cap)}</figcaption>" if cap else ""}</figure>'
+        fig = f'<figure class="figure"><a href="{esc(img["src"])}" target="_blank" rel="noopener" aria-label="{esc(img.get("alt", "그림"))} 크게 보기"><img src="{esc(img["src"])}" alt="{esc(img.get("alt", ""))}" decoding="async"></a>{f"<figcaption>{esc(cap)}</figcaption>" if cap else ""}</figure>'
         (p if p.name == 'p' and len(p.contents) == 1 else img).replace_with(BeautifulSoup(fig, 'html.parser'))
     return decides
 
@@ -276,11 +287,23 @@ def render(md_text, theme=None, template=None, canonical=None):
     theme_spec = str(theme or fm.get('theme') or 't1')
     th = resolve(theme_spec)
     soup = BeautifulSoup(_inline(body), 'html.parser')
+    kind_tpl = str(template or fm.get('template') or 'plan')
+    phases = C.parse_phases(fm)
+    cal = fm.get('calendar') or {}
+    year = C._date(cal['from']).year if cal.get('from') else (phases[0]['start'].year if phases and phases[0]['start'] else None)
+    anchors = C.schedule_flow(soup, year) if kind_tpl == 'schedule' else {}
+    if kind_tpl == 'catalog' and (fm.get('catalog') or {}).get('section'):
+        K.build(soup, fm, str(fm['catalog']['section']))
     decides = _transform_blocks(soup, fm)
+    C.history_diffs(soup)
     secs = _sections(soup)
+    layers = [str(x).strip() for x in (fm.get('layers') or [])]
+    tab_secs = [str(x).strip() for x in (fm.get('tabs') or [])]
     # 절 id를 미리 매겨 [[#절]] 링크와 결정 항목 ↔ 관련 절을 잇는다
     names, k = {}, 0
     for s in secs:
+        if s['name'] in layers:
+            s['appendix'] = False
         if not s.get('intro') and not s['appendix']:
             k += 1; s['sid'] = f's{k}'
             for key in (s['name'], s['head'], f"{s['name']} | {s['head']}"):
@@ -297,10 +320,21 @@ def render(md_text, theme=None, template=None, canonical=None):
         tags = [x for x in s['nodes'] if getattr(x, 'name', None)]
         if s.get('sid') and not hub and any(x is d or d in x.find_all('details') for x in tags for d in decides):
             hub = s['sid']
-    main, appendix, toc = [], [], []
+    main, appendix, toc, drawers = [], [], [], []
+    layer_ids = {s['sid'] for s in secs if s.get('sid') and s['name'] in layers}
     n = 0
     for s in secs:
+        if s.get('sid') and s['name'] in tab_secs:
+            s['nodes'] = C.tabs(s['nodes'], soup, s['sid'])
         inner = ''.join(str(x) for x in s['nodes'])
+        if s.get('sid') in layer_ids:
+            sid = s['sid']
+            toc.append(f'<li class="toc-l"><a href="#{sid}" data-layer="{sid}"><span class="n">↗</span>{esc(s["name"])}</a></li>')
+            drawers.append(f'<aside class="drawer" id="{sid}" role="dialog" aria-modal="true" aria-labelledby="{sid}-t" hidden>'
+                           f'<div class="drawer-head"><p class="sec-num">{esc(s["name"])}</p>'
+                           f'<button type="button" class="drawer-close" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>'
+                           f'<div class="drawer-body"><h2 id="{sid}-t">{_inline(esc(s["head"]))}</h2>{inner}</div></aside>')
+            continue
         if s.get('intro'):
             main.append(inner); continue
         if s['appendix']:
@@ -340,22 +374,27 @@ def render(md_text, theme=None, template=None, canonical=None):
         line = str(fm.get('pending') or '아직 정하지 않은 것이 {n}가지 있습니다.').replace('{n}', str(len(decides)))
         obi_html += f'<p class="pending"><span>{esc(line)}</span><a href="#{hub}">모아 보기<span aria-hidden="true"> →</span></a></p>'
 
+    obi_html += C.buttons_html(fm, names, layer_ids) + C.phases_html(phases)
+    band_html = C.calendar_html(fm, phases, anchors) if cal.get('from') else ''
     tpl = (TPL / 'page.html').read_text()
-    css = (TPL / 'doc.css').read_text().replace('/*@THEME*/', _theme_css(th)).replace(
+    css = ((TPL / 'doc.css').read_text() + '\n' + (TPL / 'components.css').read_text()).replace('/*@THEME*/', _theme_css(th)).replace(
         '/*@PRINT*/', ':root,:root:not([data-theme="light"]),:root[data-theme="dark"]{' + css_vars(th, 'light') + ';--bg:#FFFFFF;--body-size:11pt;color-scheme:light}')
     js = (TPL / 'doc.js').read_text()
     repl = {
         '@TITLE': esc(title.replace('\n', ' ')), '@SHORT': esc(short), '@KIND': esc(kind.split('·')[0].strip()),
         '@DESC': esc(str(fm.get('deck', ''))[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',
         '@ISSUE_L': esc(kind), '@ISSUE_R': _linkify(str(fm.get('code', '')), fm), '@EYEBROW': esc(str(fm.get('eyebrow', fm.get('topic', '')))),
-        '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': esc(str(fm.get('deck', ''))), '@META': meta_html, '@OBI': obi_html,
-        '@TOC': toc_html, '@NSEC': str(n), '@MAIN': ''.join(main), '@FOOT': esc(str(fm.get('footer', f'{kind} · 문서 템플릿'))),
+        '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', esc(str(fm.get('deck', '')))), '@META': meta_html, '@OBI': obi_html,
+        '@TOC': toc_html, '@BODYCLASS': f'tpl-{esc(kind_tpl)}', '@BAND': band_html, '@DRAWERS': ''.join(drawers) + ('<div class="drawer-bg" id="drawer-bg" hidden></div>' if drawers else ''), '@NSEC': str(n), '@MAIN': ''.join(main), '@FOOT': esc(str(fm.get('footer', f'{kind} · 문서 템플릿'))),
         '@THEME_COLOR_L': th['light']['bg'], '@THEME_NAME': esc(th.get('meta', {}).get('name', theme_spec)),
         '/*@CSS*/': css, '/*@JS*/': js,
     }
     out = tpl
     for k, v in repl.items():
         out = out.replace(k, v)
+    gl = str((fm.get('catalog') or {}).get('glossary') or '')
+    if gl and names.get(gl):
+        out = out.replace('data-gloss', f'data-layer="{names[gl]}"')
     out = '\n'.join(line.rstrip() for line in out.split('\n'))
     if th.get('meta', {}).get('bw'):
         out = out.replace('<html lang="ko">', '<html lang="ko" data-bw>', 1)

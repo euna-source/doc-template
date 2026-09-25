@@ -13,7 +13,7 @@ def main(argv=None):
     sub.add_parser('themes', help='테마 목록과 대표 색')
     rv = sub.add_parser('review', help='문서 구조 점검(가이드 원칙)'); rv.add_argument('src')
     sub.add_parser('guide', help='읽히는 문서의 구조 원칙 출력')
-    s = sub.add_parser('starter', help='시작 문서 출력'); s.add_argument('kind', choices=['plan', 'research']); s.add_argument('-o', '--out')
+    s = sub.add_parser('starter', help='시작 문서 출력'); s.add_argument('kind', choices=['plan', 'research', 'schedule', 'catalog']); s.add_argument('-o', '--out')
     pb = sub.add_parser('publish', help='GitHub Pages에 올리기'); pb.add_argument('html'); pb.add_argument('slug'); pb.add_argument('--repo')
     sub.add_parser('mcp', help='MCP 서버(stdio) 실행')
     a = p.parse_args(argv)
