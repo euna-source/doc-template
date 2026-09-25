@@ -4,7 +4,8 @@
 
 - 표지와 **띠지**(결론 한 줄 + 바뀌는 것·대가·뒤집힐 조건)로 첫 화면에서 결론이 읽힙니다.
 - 본문 폭은 한글 한 줄 36자 안팎(36em), 행간 1.7입니다. 절 사이에는 타공 헤어라인이 들어갑니다.
-- 색은 머리말 한 줄로 고릅니다. 다이칸야마 츠타야 서점이 소개한 책 표지에서 뽑은 여섯 배색, 흑백, 한 가지 색 모드가 있습니다.
+- 색은 머리말 한 줄로 고릅니다. 다이칸야마 츠타야 서점이 소개한 책 표지에서 뽑은 여섯 배색, 흑백(검정·흰색 두 색만), 한 가지 색 모드가 있습니다.
+- 구조 점검이 들어 있습니다. 결론을 맨 위에, 소제목은 결론 문장으로, 한 문서 한 독자 같은 원칙([가이드](src/doc_template/assets/guide.md))을 `review`가 점수와 고칠 점으로 알려 줍니다.
 
 ## 설치
 
@@ -43,7 +44,7 @@ codex mcp add doc-template -- doc-template-mcp
 
 ## 쓰는 법
 
-AI에게는 이렇게 말하면 됩니다. "doc-template으로 이 내용을 기획 문서로 만들어 줘. 테마는 t1."
+AI에게는 이렇게 말하면 됩니다. "doc-template으로 이 내용을 기획 문서로 만들어 줘. 테마는 t1." MCP 도구 순서는 `get_guide` → `get_starter` → `review_document` → `render_document`입니다.
 
 터미널에서는 이렇습니다.
 
@@ -51,6 +52,8 @@ AI에게는 이렇게 말하면 됩니다. "doc-template으로 이 내용을 기
 doc-template starter plan -o 기획.md       # 시작 문서
 doc-template render 기획.md                 # 기획.html 생성
 doc-template render 기획.md --theme mono    # 흑백으로
+doc-template review 기획.md                  # 구조 점검(점수·고칠 점)
+doc-template guide                           # 구조 원칙
 doc-template themes                          # 테마 목록
 ```
 
@@ -65,7 +68,7 @@ doc-template themes                          # 테마 목록
 | `t5` | 연둣빛 풀색 | 『&Premium 京都』 |
 | `t6` | 노랑·빨강·남색 | 『いろいろ色のはじまり』 |
 | `paper` | 종이·먹 (v1 기본) | — |
-| `mono` | 흑백 | 인쇄·흑백 복사용 |
+| `mono` | 흑백 | 검정·흰색 두 색만. 위계는 크기·굵기·선·반전 |
 | `one:#HEX` / `one:t3` | 한 가지 색 | 고른 색 하나를 절 번호·목차·형광펜·띠지에만 |
 
 모든 테마는 라이트·다크 양쪽에서 글자 대비 4.5:1 이상을 검사합니다.

@@ -27,4 +27,12 @@ expect('render_file .md만', raises(lambda: M.render_file(str(f))))
 expect('배포: 생성기 표식 없는 파일 거부', raises(lambda: _check_html(f)))
 expect('배포: 우리 파일 통과', _check_html(ok['path']))
 expect('배포: 이상한 slug 거부', raises(lambda: _slug('../..')))
+from doc_template.lint import review
+good = review(open(Path(__file__).resolve().parents[1] / 'src/doc_template/assets/starters/plan.md').read())
+expect('구조: 시작 문서는 경고 없음', not [i for i in good['issues'] if i['level'] == '경고'])
+mixed = "---\nobi:\n  text: 결론\n---\n## 배경 | 왜 필요한가를 말한다\n\n" + ('API 배치 DB 엔드포인트 설명 ' * 60) + "\n\n## 부록 | 문안\n\n" + ('참가자 안내 문안 ' * 80)
+ids = {i['id'] for i in review(mixed)['issues']}
+expect('구조: 개발 상세 섞임 경고', 'audience-mix' in ids)
+expect('구조: 부록 문안 경고', 'appendix-content' in ids)
+expect('구조: 강조 과다 경고', 'mark-many' in {i['id'] for i in review('## 가 | 결론 문장입니다\n\n==a== ==b==')['issues']})
 print('fails:', fails or 0); sys.exit(1 if fails else 0)

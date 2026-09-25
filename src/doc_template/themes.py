@@ -20,18 +20,25 @@ def palette(name):
     return {m: _complete(data[m]) for m in ('light', 'dark')} | {'meta': data.get('meta', {})}
 
 MONO = {
+    'light': dict(bg='#FFFFFF', panel='#FFFFFF', line='#000000', text='#000000', muted='#000000', accent='#000000',
+                  mark='#000000', marktext='#FFFFFF', link='#000000', linkline='#000000', obi='#000000', obitext='#FFFFFF'),
+    'dark': dict(bg='#000000', panel='#000000', line='#FFFFFF', text='#FFFFFF', muted='#FFFFFF', accent='#FFFFFF',
+                 mark='#FFFFFF', marktext='#000000', link='#FFFFFF', linkline='#FFFFFF', obi='#FFFFFF', obitext='#000000'),
+    'meta': {'name': '흑백', 'note': '검정과 흰색 두 색만 쓴다. 위계는 크기·굵기·선·반전(검정 면에 흰 글자)으로 만든다.', 'bw': True}}
+
+ONE_BASE = {
     'light': dict(bg='#FAFAF8', panel='#F0F0EC', line='#D6D6D1', text='#1A1A1A', muted='#5C5C5C', accent='#1A1A1A',
                   mark='#E4E4E0', marktext='#1A1A1A', link='#1A1A1A', linkline='#1A1A1A', obi='#1A1A1A', obitext='#FAFAF8'),
     'dark': dict(bg='#161716', panel='#1F201E', line='#3D3E3B', text='#ECEBE6', muted='#B4B3AC', accent='#ECEBE6',
                  mark='#45463F', marktext='#FFFFFF', link='#ECEBE6', linkline='#ECEBE6', obi='#ECEBE6', obitext='#161716'),
-    'meta': {'name': '흑백', 'note': '색 없이 굵기·밑줄·면 농도로 위계를 만든다. 인쇄·흑백 복사에 그대로 쓴다.'}}
+}
 
 def one_color(hex_, base='mono'):
     """한 가지 색: 바탕·글자는 흑백 모드. 강조색은 절 번호·목차 막대·형광펜·띠지에만 쓰고, 링크는 본문색+흐린 밑줄."""
     L, C, H = to_oklch(hex_)
     out = {'meta': {'name': f'한 가지 색 {hex_.upper()}', 'note': '강조색 하나를 편집 표식(절 번호·목차 막대·형광펜·띠지)에만 쓴다. 링크는 본문색 밑줄.'}}
     for mode in ('light', 'dark'):
-        t = dict(MONO[mode])
+        t = dict(ONE_BASE[mode])
         if mode == 'light':
             t['mark'] = from_oklch(0.90, min(C, .10), H)
             t['accent'] = fit_contrast(from_oklch(min(L, .55), C, H), t['bg'])

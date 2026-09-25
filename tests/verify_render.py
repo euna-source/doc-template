@@ -35,6 +35,18 @@ with sync_playwright() as p:
                     fails.append(dict(theme=th, w=w, mode=mode, ov=ov, errs=errs[:2], low=round(low, 2)))
                 results.append(dict(theme=th, w=w, mode=mode, low=round(low, 2), measure=measure))
                 pg.close()
+    # 흑백: 모든 요소의 지정 색이 검정·흰색·투명뿐인지
+    fbw = tmp / 'mono.html'
+    for mode in ('light', 'dark'):
+        pg = b.new_page(viewport={'width': 1440, 'height': 900}, color_scheme=mode); pg.goto(fbw.as_uri(), wait_until='networkidle')
+        bad = pg.evaluate('''() => { const ok = new Set(['rgb(0, 0, 0)','rgb(255, 255, 255)','rgba(0, 0, 0, 0)']); const out = new Set();
+          for (const el of document.querySelectorAll('*')) { if (el.tagName === 'IMG') continue; const c = getComputedStyle(el);
+            for (const p of ['color','backgroundColor','borderTopColor','borderLeftColor','borderBottomColor','textDecorationColor','outlineColor']) {
+              const v = c[p]; if (!ok.has(v) && !(p.startsWith('border') && c[p.replace('Color','Width')] === '0px')) out.add(p + ' ' + v + ' ' + (el.className || el.tagName)); } }
+          return [...out].slice(0, 6) }''')
+        checks += 1
+        if bad: fails.append({'bw': mode, 'colors': bad})
+        pg.close()
     # 조작 (t1)
     f = tmp / 't1.html'; pg = b.new_page(viewport={'width': 1440, 'height': 900}); pg.goto(f.as_uri(), wait_until='networkidle')
     ok = lambda n, c: (fails.append({'interaction': n}) if not c else None)

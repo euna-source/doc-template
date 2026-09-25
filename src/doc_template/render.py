@@ -22,6 +22,7 @@ from markdown_it import MarkdownIt
 from mdit_py_plugins.front_matter import front_matter_plugin
 from bs4 import BeautifulSoup
 from .themes import resolve, css_vars, audit
+from .lint import review
 
 ROOT = Path(__file__).resolve().parent / 'assets'
 TPL = ROOT
@@ -244,8 +245,12 @@ def render(md_text, theme=None, template=None, canonical=None):
     for k, v in repl.items():
         out = out.replace(k, v)
     out = '\n'.join(line.rstrip() for line in out.split('\n'))
+    if th.get('meta', {}).get('bw'):
+        out = out.replace('<html lang="ko">', '<html lang="ko" data-bw>', 1)
+    rv = review(md_text)
     return out, {'theme': theme_spec, 'sections': n, 'contrast_min': min(r[3] for r in audit(th)),
-                 'contrast_fail': [r for r in audit(th) if r[3] < 4.5]}
+                 'contrast_fail': [r for r in audit(th) if r[3] < 4.5],
+                 'structure_score': rv['score'], 'structure_issues': rv['issues']}
 
 
 def _theme_css(th):
