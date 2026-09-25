@@ -17,7 +17,7 @@
   [^n] 와 '## 출처' 목록   각주 ↔ 출처. 출처 줄 끝의 {확인|일부|미확인}
   ## 변경 이력 표         이력 표
 """
-import html, re
+import html, os, re
 from pathlib import Path
 import yaml
 from markdown_it import MarkdownIt
@@ -55,6 +55,28 @@ def _inline(text):
     text = re.sub(r'\{\{(.+?)\}\}', r'<span class="tag">\1</span>', text)
     text = re.sub(r'\[\^(\w+)\]', lambda m: f'<sup class="ref"><a href="#r{m.group(1)}" aria-label="출처 {m.group(1)}">{m.group(1)}</a></sup>', text)
     return text
+
+
+KEY = re.compile(r'(?<![\w/-])([A-Z][A-Z0-9]{1,9}-\d{1,6})(?![\w-])')
+MDLINK = re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
+
+
+def _linkify(text, fm):
+    """머리·메타 값: [글](https://…)은 링크로, CCO-121 같은 티켓 번호는 머리말 jira(또는 DOC_TEMPLATE_JIRA) 주소로 잇는다."""
+    base = str(fm.get('jira') or os.environ.get('DOC_TEMPLATE_JIRA') or '').rstrip('/')
+    out, pos = [], 0
+    for m in MDLINK.finditer(text):
+        out.append(('t', text[pos:m.start()])); out.append(('a', m.group(1), m.group(2))); pos = m.end()
+    out.append(('t', text[pos:]))
+    html_out = []
+    for part in out:
+        if part[0] == 'a':
+            html_out.append(f'<a href="{esc(part[2])}" target="_blank" rel="noopener">{esc(part[1])}</a>')
+        elif base.startswith(('https://', 'http://')):
+            html_out.append(KEY.sub(lambda k: f'<a href="{esc(base)}/browse/{k.group(1)}" target="_blank" rel="noopener">{k.group(1)}</a>', esc(part[1])))
+        else:
+            html_out.append(esc(part[1]))
+    return ''.join(html_out)
 
 
 def parse(md_text):
@@ -289,8 +311,8 @@ def render(md_text, theme=None, template=None, canonical=None):
     dot, stext = STATUS.get(str(fm.get('status', 'draft')), STATUS['draft'])
     meta = [('상태', f'<span class="state"><i class="dot {dot}" aria-hidden="true"></i>{stext}</span>')]
     for k, v in (fm.get('meta') or {}).items():
-        meta.append((esc(str(k)), esc(str(v))))
-    meta_html = ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in meta[:5])
+        meta.append((esc(str(k)), _linkify(str(v), fm)))
+    meta_html = ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in meta[:6])
     obi = fm.get('obi') or {}
     obi_html = ''
     if obi:
@@ -309,7 +331,7 @@ def render(md_text, theme=None, template=None, canonical=None):
     repl = {
         '@TITLE': esc(title.replace('\n', ' ')), '@SHORT': esc(short), '@KIND': esc(kind.split('·')[0].strip()),
         '@DESC': esc(str(fm.get('deck', ''))[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',
-        '@ISSUE_L': esc(kind), '@ISSUE_R': esc(str(fm.get('code', ''))), '@EYEBROW': esc(str(fm.get('eyebrow', fm.get('topic', '')))),
+        '@ISSUE_L': esc(kind), '@ISSUE_R': _linkify(str(fm.get('code', '')), fm), '@EYEBROW': esc(str(fm.get('eyebrow', fm.get('topic', '')))),
         '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': esc(str(fm.get('deck', ''))), '@META': meta_html, '@OBI': obi_html,
         '@TOC': toc_html, '@NSEC': str(n), '@MAIN': ''.join(main), '@FOOT': esc(str(fm.get('footer', f'{kind} · 문서 템플릿'))),
         '@THEME_COLOR_L': th['light']['bg'], '@THEME_NAME': esc(th.get('meta', {}).get('name', theme_spec)),

@@ -61,6 +61,8 @@ svg{display:block}
 .cover{padding-top:var(--s-7)}
 .issue{display:flex;justify-content:space-between;gap:var(--s-4);padding-bottom:var(--s-3);border-bottom:var(--rule) solid var(--text);font-size:var(--fs-label);letter-spacing:.02em;color:var(--muted);font-variant-numeric:tabular-nums}
 .issue strong{color:var(--text);font-weight:600}
+.issue a,.meta dd a{color:var(--link);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.issue a:hover,.meta dd a:hover{text-decoration-thickness:2px}
 .cover-main{padding:var(--s-9) 0 var(--s-8);max-width:52rem}
 .kind{display:flex;align-items:center;gap:12px;color:var(--accent);font-size:var(--fs-label);font-weight:700;letter-spacing:.04em;margin-bottom:var(--s-5)}
 .kind::before{content:"";width:20px;height:var(--rule);background:currentColor}

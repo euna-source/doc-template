@@ -56,6 +56,9 @@ def review(md_text):
         cells = obi.get('cells') or []
         if len(cells) != 3:
             add('obi-cells', '제안', '띠지', f'띠지 칸이 {len(cells)}개입니다.', '무엇이 바뀌나 · 감수할 대가 · 뒤집힐 조건 세 칸을 쓰세요.')
+    for k in (fm.get('meta') or {}):
+        if re.search(r'읽는\s*사람|독자|대상', str(k)):
+            add('meta-reader', '제안', '메타', f"메타의 「{k}」는 쓰는 사람만 알면 되는 정보입니다.", '빼고, 그 자리에 상위 문서(예: 상위 문서: CCO-121)를 두세요.')
     deck = str(fm.get('deck', ''))
     if not deck:
         add('deck-missing', '제안', '덱', '표지 요약(deck)이 없습니다.', '무엇을 결정하는 문서인지 두 문장으로 쓰세요.')
