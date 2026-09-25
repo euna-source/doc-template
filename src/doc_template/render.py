@@ -57,8 +57,9 @@ def _inline(text):
     return text
 
 
-KEY = re.compile(r'(?<![\w/-])([A-Z][A-Z0-9]{1,9}-\d{1,6})(?![\w-])')
-MDLINK = re.compile(r'\[([^\]]+)\]\((https?://[^\s)]+)\)')
+# 한글 조사(CCO-121은)는 경계로 본다: 영문·숫자·밑줄·하이픈·슬래시만 이어진 글자로 친다
+KEY = re.compile(r'(?<![A-Za-z0-9_/-])([A-Z][A-Z0-9]{1,9}-\d{1,6})(?![A-Za-z0-9_-])')
+MDLINK = re.compile(r'\[([^\]]+)\]\((https?://(?:[^\s()]|\([^\s()]*\))+)\)')
 
 
 def _linkify(text, fm):

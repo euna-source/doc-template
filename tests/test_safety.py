@@ -1,5 +1,6 @@
 """회귀 시험: HTML 주입·경로 이탈·덮어쓰기·배포 파일 검증. 사용: .venv/bin/python tests/test_safety.py"""
-import sys, tempfile
+import os, sys, tempfile
+os.environ.pop('DOC_TEMPLATE_JIRA', None)  # 시험은 환경 변수와 무관하게
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from doc_template.render import render
@@ -64,6 +65,15 @@ expect('구조: 읽는 사람 메타 제안', 'meta-reader' in {i['id'] for i in
 expect('상태: 안 적으면 표시 없음', '<dt>상태</dt>' not in render('---\ntitle: t\n---\n## 가 | 결론 문장입니다\n')[0] and '<dt>상태</dt>' in render('---\nstatus: review\n---\n## 가 | 결론 문장입니다\n')[0])
 bh = render("---\njira: https://example.atlassian.net\n---\n## 가 | 결론 문장입니다\n\n본문 CCO-7 과 [이미 링크 CCO-8](https://x.com) `CCQ-9`\n")[0]
 expect('본문 티켓 링크', 'href="https://example.atlassian.net/browse/CCO-7"' in bh and '/browse/CCO-8' not in bh and '/browse/CCQ-9' not in bh)
+kh = render("---\njira: https://example.atlassian.net\nmeta:\n  관련: '[계획](https://example.com/Plan_(draft)) 참고'\n---\n## 가 | 결론 문장입니다\n\nCCO-121은 정본이고 CCQ-45를 봅니다. abc/CCO-9 와\n")[0]
+expect('티켓: 조사 붙어도 링크', '/browse/CCO-121"' in kh and '/browse/CCQ-45"' in kh)
+expect('티켓: 경로·단어 안은 무시', '/browse/CCO-9"' not in kh)
+expect('링크: 괄호 든 주소', 'href="https://example.com/Plan_(draft)"' in kh)
+os.environ['DOC_TEMPLATE_JIRA'] = 'https://env.atlassian.net'
+eh = render("---\ncode: CCO-3\n---\n## 가 | 결론 문장입니다\n")[0]; fh = render("---\njira: https://fm.atlassian.net\ncode: CCO-3\n---\n## 가 | 결론 문장입니다\n")[0]
+os.environ.pop('DOC_TEMPLATE_JIRA')
+expect('티켓: 환경 변수 주소', 'https://env.atlassian.net/browse/CCO-3' in eh)
+expect('티켓: 머리말이 환경 변수보다 먼저', 'https://fm.atlassian.net/browse/CCO-3' in fh and 'env.atlassian' not in fh)
 lint_ids = {i['id'] for i in review("## 배경 | 왜 필요한가를 말한다\n\n이 기획은 순위로 행동을 이끄는 방식을 택합니다. 값 {{가안}} {{확정}} {{확인 필요}}\n")['issues']}
 expect('구조: 이름표 흩어짐 경고', 'inline-tags' in lint_ids)
 expect('구조: 제삼자 말투 제안', 'narrator' in lint_ids)
