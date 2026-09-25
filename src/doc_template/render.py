@@ -216,7 +216,7 @@ def _transform_blocks(soup, fm):
     for img in soup.find_all('img'):
         p = img.parent
         cap = img.get('title', '')
-        fig = f'<figure class="figure"><img src="{esc(img["src"])}" alt="{esc(img.get("alt", ""))}" loading="lazy">{f"<figcaption>{esc(cap)}</figcaption>" if cap else ""}</figure>'
+        fig = f'<figure class="figure"><img src="{esc(img["src"])}" alt="{esc(img.get("alt", ""))}" decoding="async">{f"<figcaption>{esc(cap)}</figcaption>" if cap else ""}</figure>'
         (p if p.name == 'p' and len(p.contents) == 1 else img).replace_with(BeautifulSoup(fig, 'html.parser'))
     return decides
 
@@ -314,7 +314,9 @@ def render(md_text, theme=None, template=None, canonical=None):
         main.append(f'<section id="{sid}" aria-labelledby="{sid}-t"><a class="sec-num" href="#{sid}"><b>{n:02d}</b>{esc(s["name"])}</a>{chip}'
                     f'<h2 id="{sid}-t">{_inline(esc(s["head"]))}</h2>{inner}</section>')
     if appendix:
-        toc.append('<li><a href="#refs"><span class="n">··</span>출처·이력</a></li>')
+        names_ap = [s['name'] for s in secs if s['appendix']]
+        label = '·'.join(dict.fromkeys('출처' if n.startswith('출처') else n for n in names_ap)) or '출처·이력'
+        toc.append(f'<li><a href="#refs"><span class="n">··</span>{esc(label)}</a></li>')
         main.append(f'<section class="appendix" id="refs" aria-labelledby="refs-t">{"".join(appendix)}</section>')
     toc_html = ''.join(toc)
 
