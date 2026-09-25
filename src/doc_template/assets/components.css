@@ -168,8 +168,9 @@ body.tpl-catalog .toc{display:none}
 body.tpl-catalog .doc :is(p,ul,ol,h2,h3,.callout,.sec-num){max-width:var(--wide)}
 .catbar{position:sticky;top:var(--header-h);z-index:15;background:var(--bg);border-bottom:var(--hair) solid var(--line);margin:var(--s-5) calc(var(--gutter) * -1) 0;padding:10px var(--gutter)}
 .catbar-in{display:grid;gap:8px}
-.filters{display:flex;flex-wrap:wrap;gap:6px 18px}
-.fgroup{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.filters{display:flex;flex-wrap:nowrap;gap:6px 18px;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.fgroup{flex:none}
+.fgroup{display:flex;flex-wrap:nowrap;align-items:center;gap:4px}
 .flabel{font-size:var(--fs-label);font-weight:700;color:var(--muted);margin-right:4px}
 .fgroup button,.ftools button{min-height:36px;padding:0 12px;border:var(--hair) solid var(--line);border-radius:999px;background:var(--bg);color:var(--text);font-size:var(--fs-cap)}
 .fgroup button[aria-pressed="true"],.ftools button[aria-pressed="true"]{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:700}
@@ -196,6 +197,12 @@ body.tpl-catalog .doc :is(p,ul,ol,h2,h3,.callout,.sec-num){max-width:var(--wide)
 .cat td{min-width:8em}
 .cat .c-문구,.cat .c-발생-조건{min-width:20em}
 .cat .c-상태{min-width:14em}
+.cat .c-읽음-기준,.cat .c-이동,.cat .c-수신자{min-width:14em}
+.cat tr.empty td{position:sticky;left:0;padding:24px 16px;background:var(--panel)}
+.cat tr.empty p{margin:0 0 10px;font-weight:600}
+.empty-fix,.gl-open{min-height:36px;padding:0 12px;border:var(--hair) solid var(--line);border-radius:999px;background:var(--bg);color:var(--text);font-size:var(--fs-cap)}
+.drawer tr.hl > *{background:color-mix(in srgb,var(--mark) 45%,var(--bg))}
+body.tpl-catalog .toc-mobile{display:block;max-width:var(--wide);margin-bottom:var(--s-6)}
 .ttl{display:block;font-weight:700;font-size:var(--fs-small);line-height:1.35}
 .typ{display:block;margin-top:4px;font-size:var(--fs-min);word-break:break-all;color:var(--muted)}
 .typ code{font-size:var(--fs-min)}
@@ -248,6 +255,8 @@ details.callout.rule .callout-body{padding-left:calc(var(--s-6) + 14em + 12px)}
   .catbar{padding:8px var(--gutter)}
   #cat-ftoggle{display:inline-flex}
   .catbar:not(.open) .filters{display:none}
+  .catbar.open .filters{flex-wrap:wrap;max-height:40vh;overflow:auto}
+  .catbar.open .fgroup{flex-wrap:wrap}
   .fsearch{flex:1}
   .fsearch input{min-width:0;width:100%}
   .cat-wrap{max-height:none;overflow:visible;border:0}

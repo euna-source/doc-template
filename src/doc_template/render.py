@@ -249,6 +249,15 @@ def _xrefs(soup, names):
         t.replace_with(BeautifulSoup(''.join(out), 'html.parser'))
 
 
+def _cjk_bold(soup):
+    """'**잠금 상태(OS·기기)**와'처럼 닫는 ** 앞이 기호, 뒤가 한글이면 CommonMark가 굵게로 못 닫는다. 남은 **…**를 굵게로."""
+    pat = re.compile(r'\*\*(?=\S)(.+?)(?<=\S)\*\*')
+    for t in list(soup.find_all(string=pat)):
+        if t.find_parent(['code', 'pre']):
+            continue
+        t.replace_with(BeautifulSoup(pat.sub(lambda m: f'<strong>{m.group(1)}</strong>', esc(str(t), quote=False)), 'html.parser'))
+
+
 def _keys(soup, fm):
     """본문의 티켓 번호(CCO-121 등)도 머리말 jira 주소가 있으면 링크로. 이미 링크·코드 안은 건드리지 않는다."""
     base = str(fm.get('jira') or os.environ.get('DOC_TEMPLATE_JIRA') or '').rstrip('/')
@@ -310,6 +319,7 @@ def render(md_text, theme=None, template=None, canonical=None):
                 names.setdefault(key, s['sid'])
     _xrefs(soup, names)
     _keys(soup, fm)
+    _cjk_bold(soup)
     pending, hub = {}, ''
     for d in decides:
         for a in d.find_all('a', class_='xref'):

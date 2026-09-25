@@ -54,6 +54,13 @@ with sync_playwright() as p:
                     if not pg.evaluate("[...document.querySelectorAll('tr.row')].some(r => !r.classList.contains('hidden') && r.offsetParent)"): fails.append(f'{tag}: 접은 그룹이 검색에 안 보임')
                     pg.evaluate("document.getElementById('cat-reset').click()")
                     if pg.inner_text('#cat-count') != c0: fails.append(f'{tag}: 초기화가 처음 건수로 안 돌아감')
+                    # 필터 하나 고른 뒤 없는 검색어 → '다른 필터 풀기'로 빈 결과에서 벗어나야 한다
+                    checks += 1
+                    pg.evaluate("document.querySelector('.fgroup button[data-v]:not([data-v=all]):not([data-v=any])').click()")
+                    pg.fill('#cat-q', 'zzzz')
+                    pg.evaluate("document.querySelector('.empty-fix').click()")
+                    if pg.inner_text('#cat-count').startswith('표시 0'): fails.append(f'{tag}: 다른 필터 풀기로 빈 결과를 못 벗어남')
+                    pg.evaluate("document.getElementById('cat-reset').click()")
                 pg.close()
     b.close()
 print(json.dumps({'checks': checks, 'fails': fails}, ensure_ascii=False, indent=1))

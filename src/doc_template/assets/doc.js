@@ -267,6 +267,13 @@
     openDrawer = null;
     if (opener && opener.focus) opener.focus();
   };
+  const glossHit = (d, from) => {   // 열 머리 ?로 열면 그 열의 설명 줄을 표시하고 그리로
+    const name = (from && from.getAttribute('aria-label') || '').replace(/ 설명$/, '').trim();
+    $$('tr.hl', d).forEach((x) => x.classList.remove('hl'));
+    if (!name) return;
+    const row = $$('tbody tr', d).find((tr) => { const c = tr.querySelector('td,th'); return c && c.textContent.includes(name); });
+    if (row) { row.classList.add('hl'); row.scrollIntoView({ block: 'center' }); }
+  };
   const openLayer = (id, from) => {
     const d = document.getElementById(id);
     if (!d || !d.classList.contains('drawer')) return false;
@@ -277,6 +284,7 @@
     openDrawer = d;
     $('.drawer-body', d).scrollTop = 0;
     $('.drawer-close', d).focus();
+    if (from && from.classList && from.classList.contains('qh')) glossHit(d, from);
     return true;
   };
   document.addEventListener('click', (e) => {
@@ -374,14 +382,32 @@
         const chip = $(`.gchip[data-g="${g.id}"]`); if (chip) chip.classList.toggle('empty', n === 0);
       });
       const cnt = $('#cat-count'); if (cnt) cnt.textContent = `표시 ${shown} / ${rows.length}행`;
+      const on = sel.map(([, v], i) => [groups[i], v]).filter(([, v]) => v !== 'all');
       const tg = $('#cat-ftoggle');
-      if (tg) { const active = sel.filter(([, v], i) => v !== groups[i].dataset.default).length; tg.textContent = active ? `필터 · ${active}` : '필터'; }
+      if (tg) tg.textContent = on.length ? `필터 · ${on.length}` : '필터';
+      // 빈 결과: 어떤 필터가 걸렸는지 말하고, 방금 고른 것만 남기고 풀 수 있게
+      const empty = $('tr.empty', catTable);
+      if (empty) {
+        empty.hidden = shown !== 0;
+        const names = on.map(([g, v]) => `${g.getAttribute('aria-label')} '${($(`button[data-v="${CSS.escape(v)}"]`, g) || {}).textContent?.replace(/\d+$/, '') || v}'`);
+        $('.empty-why', empty).textContent = names.length ? `지금 걸린 필터: ${names.join(', ')}${query ? `, 검색 '${query}'` : ''}.` : (query ? `검색 '${query}'에 맞는 행이 없습니다.` : '');
+      }
     };
+    let lastGroup = null;
+    const small = matchMedia('(max-width: 768px)');
     groups.forEach((g) => g.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-v]'); if (!b) return;
       $$('button[data-v]', g).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      lastGroup = g;
       apply();
+      if (small.matches) { catbar.classList.remove('open'); $('#cat-ftoggle')?.setAttribute('aria-expanded', 'false'); }  // 고르면 접어 화면을 비운다
     }));
+    catTable.addEventListener('click', (e) => {
+      if (!e.target.closest('.empty-fix')) return;
+      groups.forEach((g) => { if (g !== lastGroup) $$('button[data-v]', g).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === 'all'))); });
+      if (q) q.value = '';   // 검색어도 풀어야 빈 결과에서 벗어난다
+      apply();
+    });
     const reset = () => {
       groups.forEach((g) => $$('button[data-v]', g).forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === g.dataset.default))));
       if (q) q.value = ''; openGroups.clear(); closedGroups.clear(); apply();

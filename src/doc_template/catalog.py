@@ -58,7 +58,7 @@ def _field_items(ul):
             bq.name = 'div'; bq['class'] = ['msg']
             for p in bq.find_all('p'):
                 p.unwrap()
-        out.append((name, li.decode_contents().strip(), li.get_text(' ', strip=True)))
+        out.append((name, li.decode_contents().strip(), li.get_text(' ', strip=True).replace('**', '')))
     return out
 
 
@@ -171,7 +171,9 @@ def build(soup, fm, section_name):
                     f'<span class="flabel">{esc(str(flt.get("name", "")))}</span>{"".join(btns)}</div>')
     tools = ('<div class="ftools"><button type="button" id="cat-ftoggle" aria-expanded="false">필터</button><label class="fsearch"><span class="sr">검색</span><input type="search" id="cat-q" placeholder="문구·타입·조건 검색"></label>'
              f'{"<button type=button id=cat-more aria-pressed=false>핵심 열만</button>" if more else ""}'
-             '<button type="button" id="cat-reset">필터 초기화</button><span class="fcount" id="cat-count" aria-live="polite"></span></div>')
+             '<button type="button" id="cat-reset">필터 초기화</button>'
+             f'{"<button type=button class=gl-open data-gloss>열 설명</button>" if cfg.get("glossary") else ""}'
+             '<span class="fcount" id="cat-count" aria-live="polite"></span></div>')
     bar = (f'<div class="catbar" id="catbar"><div class="catbar-in"><div class="filters">{"".join(fbar)}</div>{tools}'
            f'<nav class="gchips" aria-label="그룹으로 이동">{"".join(chips)}</nav></div></div>')
     # 열 묶음 머리줄: column_groups: ['식별 3', '앱 푸시 1', …] — 번호·제목 열을 포함한 열 수
@@ -188,6 +190,7 @@ def build(soup, fm, section_name):
         grow += f'<th scope="colgroup" colspan="{cnt}" data-span="{cnt}" data-span-core="{core}"{" class=more" if core == 0 else ""}>{esc(name_)}</th>'
     table = (f'<div class="cat-wrap" tabindex="0" role="region" aria-label="{esc(section_name)} 표"><table class="cat">'
              f'<thead>{f"<tr class=hg>{grow}</tr>" if grow else ""}<tr class="hc"><th scope="col" class="c-num">#</th><th scope="col" class="c-name">{esc(str(cfg.get("title_column", "항목")))}</th>{head_cells}</tr></thead>'
-             f'<tbody>{tbody}</tbody></table></div>')
+             f'<tbody>{tbody}<tr class="empty" hidden><td colspan="{ncol}"><p>조건에 맞는 행이 없습니다. <span class="empty-why"></span></p>'
+             f'<button type="button" class="empty-fix">다른 필터 풀기</button></td></tr></tbody></table></div>')
     slot.replace_with(BeautifulSoup(bar + table, 'html.parser'))
     return total

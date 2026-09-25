@@ -101,4 +101,7 @@ expect('목록: 열 묶음 머리줄', 'class="hg"' in ch and 'data-span-core=' 
 expect('목록: 열 설명 버튼이 서랍으로', 'class="qh" data-layer="' in ch)
 ih, _ = render("---\ntemplate: catalog\ncatalog: {section: 목록, columns: [내용]}\n---\n## 목록 | 목록\n\n### 01 그룹\n\n#### #1 <script>x</script>\n\n- 내용: <img src=x onerror=alert(2)>\n")
 expect('목록: 주입 없음', '<script>x' not in ih.split('<body', 1)[1].split('<script>\n', 1)[0] and '<img src=x' not in ih)
+bh2 = render("---\ntitle: t\n---\n## 가 | 결론 문장입니다\n\n본문은 **잠금 상태(OS·기기)**와 **{활동명}**님이 `**코드**`\n")[0]
+expect('한글 조사 앞 굵게', '<strong>잠금 상태(OS·기기)</strong>와' in bh2 and '<strong>{활동명}</strong>님이' in bh2 and '<code>**코드**</code>' in bh2)
+expect('한글 굵게: 특수문자 한 번만', '<strong>A&amp;B</strong>와' in render("---\ntitle: t\n---\n## 가 | 결론 문장입니다\n\n**A&B**와\n")[0])
 print('fails:', fails or 0); sys.exit(1 if fails else 0)
