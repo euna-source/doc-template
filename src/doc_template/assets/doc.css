@@ -150,6 +150,37 @@ mark a{color:inherit;text-decoration-color:currentColor}
 .callout.unknown{border:1.5px dashed var(--muted)}
 .callout p+p{margin-top:.5em}
 
+/* 접이 상자와 결정 모음: 제목 한 줄만 보이고, 누르면 배경이 펼쳐진다 */
+details.callout{padding:0}
+details.callout>summary{display:flex;align-items:flex-start;gap:10px;min-height:48px;padding:13px var(--s-6);margin:0;cursor:pointer;list-style:none;border-radius:inherit}
+details.callout>summary::-webkit-details-marker{display:none}
+details.callout>summary::after{content:"";flex:none;margin:.35em 2px 0 auto;width:8px;height:8px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);transition:transform 180ms var(--ease)}
+details.callout[open]>summary::after{transform:rotate(-135deg);margin-top:.6em}
+@media (hover:hover){details.callout>summary:hover{background:var(--panel)}}
+details.callout .dq{min-width:0;line-height:1.55}
+.callout-body{padding:0 var(--s-6) var(--s-5)}
+.callout-body>*+*{margin-top:.5em}
+.callout.decide{border:var(--hair) solid var(--line);border-radius:var(--r-mark)}
+.callout.decide+.callout.decide{margin-top:calc(var(--block-gap) * -1 + var(--s-2))}
+.callout.decide[open]{border-color:var(--text)}
+.callout.decide>summary{font-size:var(--fs-ui);font-weight:700}
+.callout.decide .dn{flex:none;color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.04em;line-height:1.55}
+.callout.decide .callout-body{padding-left:calc(var(--s-6) + 10px + 2ch)}
+.callout.decide:target,.doc>section:target>h2{scroll-margin-top:calc(var(--header-h) + 16px)}
+.xref{font-weight:600;white-space:nowrap}
+.callout-body .rel{font-size:var(--fs-cap);color:var(--muted)}
+.doc h3+details.callout,.doc h3+.hub-toggle{margin-top:0}
+.doc h3:has(+details.decide){margin-top:var(--s-7);font-size:var(--fs-ui);color:var(--muted)}
+.xref::after{content:" ↗";font-size:.85em}
+/* 절 머리의 '정할 것 N': 결정 모음의 해당 항목으로 간다 */
+.sec-pending{display:inline-flex;align-items:center;margin-left:var(--s-3);vertical-align:top;font-size:var(--fs-min);font-weight:700;line-height:1;padding:4px 7px;border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--r-mark);text-decoration:none;letter-spacing:.02em}
+.sec-pending:hover{background:var(--accent);color:var(--bg)}
+/* 표지 아래 한 줄 */
+.pending{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-top:var(--s-4);max-width:calc(var(--measure) * 1.125 + 64px);font-size:var(--fs-small);color:var(--muted)}
+.pending a{font-weight:700;color:var(--text);text-underline-offset:3px}
+.hub-toggle{margin:0 0 var(--s-3);border:0;background:none;padding:6px 0;min-height:44px;font:inherit;font-size:var(--fs-cap);font-weight:600;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.hub-toggle:hover{color:var(--text)}
+
 /* 인용 */
 .pull{margin:var(--s-8) 0;padding:4px 0 4px var(--s-6);border-left:var(--rule) solid var(--accent);font-family:var(--serif);font-size:1.625rem;font-weight:700;line-height:1.5;text-wrap:balance}
 .pull cite{display:block;margin-top:var(--s-3);font-family:var(--sans);font-size:var(--fs-cap);font-style:normal;font-weight:400;color:var(--muted)}
@@ -213,6 +244,9 @@ mark a{color:inherit;text-decoration-color:currentColor}
 [data-bw] .toc a[aria-current="true"]{border-left-color:var(--text);font-weight:700}
 [data-bw] .toc a:not([aria-current="true"]){font-weight:400}
 [data-bw] .callout.note{border:1px solid var(--text)}
+[data-bw] .callout.decide{border-color:var(--text)}
+[data-bw] .sec-pending{border-color:var(--text);color:var(--text)}
+[data-bw] .sec-pending:hover{background:var(--text);color:var(--bg)}
 [data-bw] .meta dt,[data-bw] .stats span,[data-bw] .issue,[data-bw] .table th{font-weight:600}
 [data-bw] .actions li.done .what{text-decoration-color:var(--text)}
 [data-bw] .sources li:target{background:var(--bg);box-shadow:none;outline:1px solid var(--text)}
@@ -255,6 +289,10 @@ mark a{color:inherit;text-decoration-color:currentColor}
   .stats div:nth-child(n+3){border-top:var(--hair) solid var(--line)}
   .stats b{font-size:2.125rem}
   .callout{padding:var(--s-4) 18px}
+  details.callout{padding:0}
+  details.callout>summary{padding:12px 16px}
+  .callout-body{padding:0 16px var(--s-4)}
+  .callout.decide .callout-body{padding-left:16px}
   .pull{font-size:1.3125rem;padding-left:18px}
   /* 목록형 표 → 카드 */
   .table.stack table,.table.stack tbody,.table.stack tr,.table.stack td{display:block;width:100%}

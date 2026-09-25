@@ -6,7 +6,9 @@
 본문 규칙
   ## 이름 | 소제목      절. '|' 왼쪽은 목차·절 번호 옆 이름, 오른쪽은 큰 제목(없으면 같은 말)
   ==구절==              노랑(강조 면) — 절마다 한 구절 권장
-  > [!note|caution|unknown] 이름   알림 상자(참고·주의·미확인)
+  > [!note|caution|unknown] 이름   알림 상자(참고·주의·미확인). ']-'는 접힘, ']+'는 펼친 채 접이
+  > [!decide]- 질문     결정 모음 항목(접이). 표지 아래 '정하지 않은 것 N가지' 줄과 관련 절 표시가 자동으로 붙는다
+  [[#절 이름]]          그 절로 가는 링크(옵시디언 제목 링크)
   > 문장 \n > — 출처      인용(마지막 줄이 '— '로 시작하면 출처)
   - [ ] / - [/] / - [x] 할 일 @담당 ~기한   다음 행동(대기·진행·완료)
   | 표 |                  모바일에서 카드. 첫 칸이 '★ '로 시작하면 추천 행
@@ -32,10 +34,12 @@ ICONS = {
     'note': '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.2"/></svg>',
     'caution': '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.2"/><path d="M12 17v.2"/></svg>',
     'unknown': '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4"/><path d="M12 16.8v.2"/></svg>',
+    'decide': '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>',
 }
 CALLOUT_ALIAS = {'note': 'note', 'info': 'note', 'tip': 'note', 'caution': 'caution', 'warning': 'caution',
-                 'danger': 'caution', 'unknown': 'unknown', 'question': 'unknown', 'todo': 'unknown'}
-CALLOUT_LABEL = {'note': '참고', 'caution': '주의', 'unknown': '미확인'}
+                 'danger': 'caution', 'unknown': 'unknown', 'question': 'unknown', 'todo': 'unknown',
+                 'decide': 'decide', 'decision': 'decide'}
+CALLOUT_LABEL = {'note': '참고', 'caution': '주의', 'unknown': '미확인', 'decide': '정할 것'}
 STATE = {'확인': 'full', '일부': 'half', '미확인': ''}
 STATUS = {'draft': ('', '초안'), 'review': ('half', '검토 중'), 'done': ('full', '확정')}
 CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="m2.5 6.2 2.3 2.3 4.7-5"/></svg>'
@@ -82,13 +86,15 @@ def _sections(soup):
 
 
 def _transform_blocks(soup, fm):
+    decides = []
     # 알림 상자
     for bq in soup.find_all('blockquote'):
         first = bq.find('p')
-        m = re.match(r'\s*\[!(\w+)\][ \t]*(.*)', first.decode_contents(), re.S) if first else None
+        m = re.match(r'\s*\[!(\w+)\]([+-]?)[ \t]*(.*)', first.decode_contents(), re.S) if first else None
         if m:
             kind = CALLOUT_ALIAS.get(m.group(1).lower(), 'note')
-            rest = m.group(2).split('\n', 1)
+            fold = m.group(2) or ('-' if kind == 'decide' else '')
+            rest = m.group(3).split('\n', 1)
             title = rest[0].strip() or CALLOUT_LABEL[kind]
             remainder = rest[1] if len(rest) > 1 else ''
             first.clear()
@@ -96,10 +102,36 @@ def _transform_blocks(soup, fm):
                 first.append(BeautifulSoup(remainder, 'html.parser'))
             else:
                 first.decompose()
-            new = soup.new_tag('aside', attrs={'class': f'callout {kind}', 'aria-label': CALLOUT_LABEL[kind]})
-            new.append(BeautifulSoup(f'<p class="callout-label">{ICONS[kind]}{esc(title)}</p>', 'html.parser'))
-            for ch in list(bq.contents):
-                new.append(ch)
+            if fold:
+                # 접이 상자: 제목(summary)만 보이고 누르면 펼친다. 결정 항목은 번호를 붙인다
+                attrs = {'class': f'callout {kind}'}
+                if fold == '+':
+                    attrs['open'] = ''
+                new = soup.new_tag('details', attrs=attrs)
+                num = ''
+                if kind == 'decide':
+                    decides.append(new)
+                    new['id'] = f'd{len(decides)}'
+                    num = f'<span class="dn">{len(decides):02d}</span>'
+                    head = num + f'<span class="dq">{title}</span>'
+                else:
+                    head = ICONS[kind] + f'<span class="dq">{title}</span>'
+                new.append(BeautifulSoup(f'<summary class="callout-label">{head}</summary>', 'html.parser'))
+                body = soup.new_tag('div', attrs={'class': 'callout-body'})
+                for ch in list(bq.contents):
+                    body.append(ch)
+                # '관련:' 줄은 배경 문단과 떼어 따로 둔다
+                for para in body.find_all('p'):
+                    head_, sep, rel = para.decode_contents().partition('\n관련:')
+                    if sep:
+                        para.clear(); para.append(BeautifulSoup(head_, 'html.parser'))
+                        para.insert_after(BeautifulSoup(f'<p class="rel">관련:{rel}</p>', 'html.parser'))
+                new.append(body)
+            else:
+                new = soup.new_tag('aside', attrs={'class': f'callout {kind}', 'aria-label': CALLOUT_LABEL[kind]})
+                new.append(BeautifulSoup(f'<p class="callout-label">{ICONS[kind]}{esc(title)}</p>', 'html.parser'))
+                for ch in list(bq.contents):
+                    new.append(ch)
             bq.replace_with(new)
         else:
             ps = bq.find_all('p')
@@ -163,6 +195,24 @@ def _transform_blocks(soup, fm):
         cap = img.get('title', '')
         fig = f'<figure class="figure"><img src="{esc(img["src"])}" alt="{esc(img.get("alt", ""))}" loading="lazy">{f"<figcaption>{esc(cap)}</figcaption>" if cap else ""}</figure>'
         (p if p.name == 'p' and len(p.contents) == 1 else img).replace_with(BeautifulSoup(fig, 'html.parser'))
+    return decides
+
+
+def _xrefs(soup, names):
+    """[[#절 이름]] · [[#절 이름|보이는 말]] → 그 절 링크. 이름이 정확히 같은 절만 잇고, 못 찾으면 글자만 남긴다. 코드 안은 건드리지 않는다."""
+    pat = re.compile(r'\[\[#([^\]|]+)(?:\|([^\]]+))?\]\]')
+    for t in list(soup.find_all(string=pat)):
+        if t.find_parent(['code', 'pre']):
+            continue
+        raw, out, pos = str(t), [], 0
+        for m in pat.finditer(raw):
+            key, label = m.group(1).strip(), (m.group(2) or m.group(1)).strip()
+            sid = names.get(key)
+            out.append(esc(raw[pos:m.start()], quote=False))
+            out.append(f'<a class="xref" href="#{sid}">{esc(label)}</a>' if sid else esc(label, quote=False))
+            pos = m.end()
+        out.append(esc(raw[pos:], quote=False))
+        t.replace_with(BeautifulSoup(''.join(out), 'html.parser'))
 
 
 def _sources(nodes, soup):
@@ -192,8 +242,26 @@ def render(md_text, theme=None, template=None, canonical=None):
     theme_spec = str(theme or fm.get('theme') or 't1')
     th = resolve(theme_spec)
     soup = BeautifulSoup(_inline(body), 'html.parser')
-    _transform_blocks(soup, fm)
+    decides = _transform_blocks(soup, fm)
     secs = _sections(soup)
+    # 절 id를 미리 매겨 [[#절]] 링크와 결정 항목 ↔ 관련 절을 잇는다
+    names, k = {}, 0
+    for s in secs:
+        if not s.get('intro') and not s['appendix']:
+            k += 1; s['sid'] = f's{k}'
+            for key in (s['name'], s['head'], f"{s['name']} | {s['head']}"):
+                names.setdefault(key, s['sid'])
+    _xrefs(soup, names)
+    pending, hub = {}, ''
+    for d in decides:
+        for a in d.find_all('a', class_='xref'):
+            ids = pending.setdefault(a['href'][1:], [])
+            if d['id'] not in ids:
+                ids.append(d['id'])
+    for s in secs:
+        tags = [x for x in s['nodes'] if getattr(x, 'name', None)]
+        if s.get('sid') and not hub and any(x is d or d in x.find_all('details') for x in tags for d in decides):
+            hub = s['sid']
     main, appendix, toc = [], [], []
     n = 0
     for s in secs:
@@ -204,9 +272,11 @@ def render(md_text, theme=None, template=None, canonical=None):
             appendix.append(f'<h2>{esc(s["head"])}</h2>' + (_sources(s['nodes'], soup) if s['name'].startswith('출처') else re.sub(r'class="table (stack|compare)"', 'class="table log"', inner)))
             continue
         n += 1
-        sid = f's{n}'
+        sid = s['sid']
         toc.append(f'<li><a href="#{sid}"><span class="n">{n:02d}</span>{esc(s["name"])}</a></li>')
-        main.append(f'<section id="{sid}" aria-labelledby="{sid}-t"><a class="sec-num" href="#{sid}"><b>{n:02d}</b>{esc(s["name"])}</a>'
+        ids = pending.get(sid, [])
+        chip = (f'<a class="sec-pending" href="#{ids[0]}">정할 것 {len(ids)}</a>' if ids else '')
+        main.append(f'<section id="{sid}" aria-labelledby="{sid}-t"><a class="sec-num" href="#{sid}"><b>{n:02d}</b>{esc(s["name"])}</a>{chip}'
                     f'<h2 id="{sid}-t">{_inline(esc(s["head"]))}</h2>{inner}</section>')
     if appendix:
         toc.append('<li><a href="#refs"><span class="n">··</span>출처·이력</a></li>')
@@ -227,6 +297,10 @@ def render(md_text, theme=None, template=None, canonical=None):
         cells = ''.join(f'<div><h2>{esc(str(c.get("h", "")))}</h2><p>{_inline(esc(str(c.get("p", ""))))}</p></div>' for c in (obi.get('cells') or [])[:3])
         obi_html = (f'<section class="obi" aria-labelledby="obi-title"><div class="obi-head"><span class="obi-label" id="obi-title">{esc(str(obi.get("label", "결론")))}</span>'
                     f'<p>{_inline(esc(str(obi.get("text", ""))))}</p></div>{f"<div class=obi-grid>{cells}</div>" if cells else ""}</section>')
+    if decides:
+        # 표지 아래 한 줄: 정하지 않은 것의 수와 결정 모음으로 가는 링크. 문구는 머리말 pending으로 바꾼다({n}이 수)
+        line = str(fm.get('pending') or '아직 정하지 않은 것이 {n}가지 있습니다.').replace('{n}', str(len(decides)))
+        obi_html += f'<p class="pending"><span>{esc(line)}</span><a href="#{hub}">모아 보기<span aria-hidden="true"> →</span></a></p>'
 
     tpl = (TPL / 'page.html').read_text()
     css = (TPL / 'doc.css').read_text().replace('/*@THEME*/', _theme_css(th)).replace(
@@ -250,7 +324,7 @@ def render(md_text, theme=None, template=None, canonical=None):
     rv = review(md_text)
     return out, {'theme': theme_spec, 'sections': n, 'contrast_min': min(r[3] for r in audit(th)),
                  'contrast_fail': [r for r in audit(th) if r[3] < 4.5],
-                 'structure_score': rv['score'], 'structure_issues': rv['issues']}
+                 'structure_score': rv['score'], 'structure_issues': rv['issues'], 'decisions': len(decides)}
 
 
 def _theme_css(th):

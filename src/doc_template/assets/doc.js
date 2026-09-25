@@ -138,6 +138,37 @@
   addEventListener('resize', onScroll);
   update();
 
+  // 결정 모음: 주소가 가리키는 항목은 펼친다(표지 줄·절 머리 '정할 것'에서 올 때)
+  const hashId = (h) => { try { return decodeURIComponent(h.slice(1)); } catch { return h.slice(1); } };
+  const openTarget = (id) => {
+    const el = id && document.getElementById(id);
+    const d = el && (el.tagName === 'DETAILS' ? el : el.closest('details'));
+    if (d) d.open = true;
+  };
+  addEventListener('hashchange', () => openTarget(hashId(location.hash)));
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (a) openTarget(hashId(a.hash));
+  });
+  openTarget(hashId(location.hash));
+  // 결정 항목이 셋 이상인 절에는 '모두 펼치기'를 둔다
+  $$('.doc > section').forEach((sec) => {
+    const items = $$(':scope > details.decide', sec);
+    if (items.length < 3) return;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'hub-toggle';
+    const sync = () => { btn.textContent = items.every((d) => d.open) ? '모두 접기' : '모두 펼치기'; };
+    btn.addEventListener('click', () => { const open = !items.every((d) => d.open); items.forEach((d) => { d.open = open; }); sync(); });
+    items.forEach((d) => d.addEventListener('toggle', sync));
+    // 소제목(h3)으로 묶었으면 첫 묶음 제목 앞에 둔다
+    const prev = items[0].previousElementSibling;
+    (prev && prev.tagName === 'H3' ? prev : items[0]).before(btn); sync();
+  });
+  // 인쇄할 때는 접힌 내용도 모두 싣는다
+  let closedForPrint = [];
+  addEventListener('beforeprint', () => { closedForPrint = $$('details:not([open])'); closedForPrint.forEach((d) => { d.open = true; }); });
+  addEventListener('afterprint', () => { closedForPrint.forEach((d) => { d.open = false; }); closedForPrint = []; });
+
   // 모바일 목차: 항목을 누르면 접는다
   const tocMobile = $('.toc-mobile');
   tocMobile?.addEventListener('click', (e) => { if (e.target.closest('a')) tocMobile.open = false; });

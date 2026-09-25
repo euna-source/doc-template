@@ -15,6 +15,24 @@ def _plain(md):
     return re.sub(r'\s+', ' ', md).strip()
 
 
+def _folded(md):
+    """접이 상자(> [!x]- 제목)의 펼친 내용은 처음 읽을 때 보이지 않으므로 분량에서 뺀다. 제목 줄은 남긴다."""
+    out, skip = [], False
+    for line in md.splitlines():
+        if re.match(r'^>\s*\[!\w+\]-', line) or (re.match(r'^>\s*\[!decide\]', line, re.I)):
+            out.append(line); skip = True; continue
+        if skip and line.startswith('>'):
+            continue
+        skip = False; out.append(line)
+    return '\n'.join(out)
+
+
+TAG = re.compile(r'\{\{[^}]+\}\}')
+VERDICT = re.compile(r'\{\{\s*(추천|보류|채택|기각|채택 제안|불채택)\s*\}\}')  # 대안 비교표의 판정은 이름표로 둔다
+# 쓰는 사람이 자기 문서를 남의 일처럼 설명하는 말투: '이 기획은 … 택합니다'
+NARRATE = re.compile(r'(?:^|[.!?]\s+)이\s*(?:기획|문서|안|제안)[은는이가]\s[^.\n]{0,80}?(?:택합니다|다룹니다|제안합니다|목표로\s*합니다|합니다)\.', re.M)
+
+
 def review(md_text):
     issues = []
     add = lambda i, lvl, where, msg, fix: issues.append(dict(id=i, level=lvl, where=where, message=msg, fix=fix))
@@ -65,7 +83,7 @@ def review(md_text):
         if len(name) > LIMITS['name']:
             add('name-long', '제안', where, f'목차 이름이 {len(name)}자입니다.', f"{LIMITS['name']}자 안의 짧은 명사로 쓰세요.")
         # 4. 한 문서 한 독자
-        chars = len(_plain(b)); total += chars
+        chars = len(_plain(_folded(b))); total += chars
         if chars > LIMITS['sec_chars']:
             add('sec-long', '경고', where, f'절 분량이 {chars}자입니다.', '다른 독자(개발 상세·참가자 문안)를 위한 내용이면 별도 문서로 떼고 링크만 두세요.')
         if re.search(r'API|배치|엔드포인트|어드민|스키마|쿼리|DB', b) and chars > 400:
@@ -91,13 +109,24 @@ def review(md_text):
                 if '@' not in t or '~' not in t:
                     add('action-owner', '제안', where, f'「{t[:24]}…」에 담당이나 기한이 없습니다.', '@담당 ~기한을 붙이세요.')
 
+        # 9. 이름표는 본문에 흩지 않는다 — 정하지 않은 것은 결정 모음 한 곳으로
+        if not re.search(r'결정|정할', name):
+            tags = [t for t in TAG.findall(b) if not VERDICT.match(t)]
+            if tags:
+                add('inline-tags', '경고' if len(tags) >= 3 else '제안', where, f'본문에 이름표가 {len(tags)}개 있습니다({", ".join(tags[:3])}).',
+                    '문장에서 이름표를 빼고, 정하지 않은 값은 결정 모음(> [!decide]- 질문)으로 옮기세요. 관련 절은 [[#절 이름]]으로 잇습니다.')
+        # 10. 쓰는 사람의 목소리
+        for m in NARRATE.finditer(b):
+            add('narrator', '제안', where, f'「{m.group(0).lstrip(".!? ").strip()[:36]}…」은 제삼자가 남의 기획을 소개하는 말투입니다.',
+                '기획자가 직접 판단을 말하게 쓰세요. 예: 「지금 저희에게는 … 가 맞다고 판단했습니다.」')
+
     if total > LIMITS['body_chars']:
         add('body-long', '경고', '문서', f'본문이 {total}자입니다.', '한 문서 한 결정. 독자가 다른 내용을 별도 문서로 나누세요.')
     if marks_total > LIMITS['marks_total']:
         add('mark-total', '제안', '문서', f'강조가 문서 전체에 {marks_total}곳입니다.', f"{LIMITS['marks_total']}곳 안으로 줄이세요.")
     if not any(re.search(r'다음\s*행동|할\s*일', h) for h, _ in main):
         add('no-actions', '제안', '문서', '다음 행동 절이 없습니다.', '## 다음 행동 | … 에 담당·기한이 있는 할 일을 두세요.')
-    if not re.search(r'\[!(unknown|question|caution|warning)\]|확인\s*필요|미확인', body):
+    if not re.search(r'\[!(unknown|question|caution|warning|decide)\]|확인\s*필요|미확인', body):
         add('no-unknowns', '제안', '문서', '모르는 것·위험을 드러낸 곳이 없습니다.', '> [!unknown] 이나 확인 필요 절로 가정과 위험을 적으세요.')
     appx_chars = sum(len(_plain(b)) for _, b in appx)
     if total and appx_chars > total * 0.25:
