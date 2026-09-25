@@ -237,6 +237,17 @@ def _xrefs(soup, names):
         t.replace_with(BeautifulSoup(''.join(out), 'html.parser'))
 
 
+def _keys(soup, fm):
+    """본문의 티켓 번호(CCO-121 등)도 머리말 jira 주소가 있으면 링크로. 이미 링크·코드 안은 건드리지 않는다."""
+    base = str(fm.get('jira') or os.environ.get('DOC_TEMPLATE_JIRA') or '').rstrip('/')
+    if not base.startswith(('https://', 'http://')):
+        return
+    for t in list(soup.find_all(string=KEY)):
+        if t.find_parent(['a', 'code', 'pre']):
+            continue
+        t.replace_with(BeautifulSoup(KEY.sub(lambda k: f'<a href="{esc(base)}/browse/{k.group(1)}" target="_blank" rel="noopener">{k.group(1)}</a>', esc(str(t), quote=False)), 'html.parser'))
+
+
 def _sources(nodes, soup):
     """'## 출처' 목록을 출처 목록으로: - [제목](url) — 메타 {확인}"""
     html_out = []
@@ -274,6 +285,7 @@ def render(md_text, theme=None, template=None, canonical=None):
             for key in (s['name'], s['head'], f"{s['name']} | {s['head']}"):
                 names.setdefault(key, s['sid'])
     _xrefs(soup, names)
+    _keys(soup, fm)
     pending, hub = {}, ''
     for d in decides:
         for a in d.find_all('a', class_='xref'):
@@ -309,7 +321,8 @@ def render(md_text, theme=None, template=None, canonical=None):
     kind = str(fm.get('kind', '기획 문서'))
     short = str(fm.get('short', title.replace('\n', ' ')))
     dot, stext = STATUS.get(str(fm.get('status', 'draft')), STATUS['draft'])
-    meta = [('상태', f'<span class="state"><i class="dot {dot}" aria-hidden="true"></i>{stext}</span>')]
+    # 상태는 머리말에 status를 적었을 때만 보인다(없는 정보를 '초안'으로 채우지 않는다)
+    meta = [('상태', f'<span class="state"><i class="dot {dot}" aria-hidden="true"></i>{stext}</span>')] if fm.get('status') else []
     for k, v in (fm.get('meta') or {}).items():
         meta.append((esc(str(k)), _linkify(str(v), fm)))
     meta_html = ''.join(f'<div><dt>{k}</dt><dd>{v}</dd></div>' for k, v in meta[:6])

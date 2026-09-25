@@ -61,6 +61,9 @@ expect('링크: 메타 마크다운 링크', '<a href="https://example.com/p" ta
 expect('링크: javascript·태그 차단', 'href="javascript' not in lh and '<b>x</b>' not in lh)
 expect('링크: jira 없으면 글자만', 'browse' not in render("---\ncode: CCO-121\n---\n## 가 | 결론 문장입니다\n")[0])
 expect('구조: 읽는 사람 메타 제안', 'meta-reader' in {i['id'] for i in lr['structure_issues']})
+expect('상태: 안 적으면 표시 없음', '<dt>상태</dt>' not in render('---\ntitle: t\n---\n## 가 | 결론 문장입니다\n')[0] and '<dt>상태</dt>' in render('---\nstatus: review\n---\n## 가 | 결론 문장입니다\n')[0])
+bh = render("---\njira: https://example.atlassian.net\n---\n## 가 | 결론 문장입니다\n\n본문 CCO-7 과 [이미 링크 CCO-8](https://x.com) `CCQ-9`\n")[0]
+expect('본문 티켓 링크', 'href="https://example.atlassian.net/browse/CCO-7"' in bh and '/browse/CCO-8' not in bh and '/browse/CCQ-9' not in bh)
 lint_ids = {i['id'] for i in review("## 배경 | 왜 필요한가를 말한다\n\n이 기획은 순위로 행동을 이끄는 방식을 택합니다. 값 {{가안}} {{확정}} {{확인 필요}}\n")['issues']}
 expect('구조: 이름표 흩어짐 경고', 'inline-tags' in lint_ids)
 expect('구조: 제삼자 말투 제안', 'narrator' in lint_ids)
