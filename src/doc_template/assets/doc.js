@@ -221,7 +221,7 @@
     }
   });
   // 오늘이 달력 안이면 그 칸이 보이게 가로 스크롤
-  if (td) { const cal = td.closest('.calgrid'); if (cal) cal.scrollLeft = td.offsetLeft - cal.clientWidth / 2 + td.clientWidth / 2; }
+  if (td) { const cal = td.closest('.calgrid'); if (cal) cal.scrollLeft += td.getBoundingClientRect().left - cal.getBoundingClientRect().left - cal.clientWidth / 2 + td.clientWidth / 2; }
   // 오늘이 달력 밖이면 범례에 며칠 앞·뒤인지 적는다
   const days = $$('.day[data-date]');
   if (days.length && !td) {
@@ -247,7 +247,10 @@
       $$('.day.reading').forEach((x) => x.classList.remove('reading'));
       const hit = byId[id] || [];
       hit.forEach((x) => x.classList.add('reading'));
-      if (hit[0]) { const g = hit[0].closest('.calgrid'); if (g) g.scrollTo({ left: hit[0].offsetLeft - 8, behavior: 'smooth' }); }
+      if (hit[0]) {
+        const g = hit[0].closest('.calgrid');
+        if (g) { const d = hit[0].getBoundingClientRect().left - g.getBoundingClientRect().left; if (d < 0 || d > g.clientWidth - hit[0].offsetWidth) g.scrollTo({ left: g.scrollLeft + d - 8, behavior: 'smooth' }); }
+      }
     };
     let t2 = 0; addEventListener('scroll', () => { cancelAnimationFrame(t2); t2 = requestAnimationFrame(spy); }, { passive: true });
   }
