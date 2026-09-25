@@ -10,7 +10,7 @@ from .themes_list import all_themes, describe
 from .themes import ROOT
 from .lint import review
 
-mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → list_themes에서 색을 골라 render_document. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 모르는 것은 따로, 다음 행동은 동사·담당·기한. publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
+mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → list_themes에서 색을 골라 render_document. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
 OUT = Path(os.environ.get('DOC_TEMPLATE_OUT', Path.home() / 'Documents' / 'doc-template'))
 
 @mcp.tool()
