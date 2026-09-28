@@ -1,6 +1,6 @@
 ---
 template: research
-theme: t1
+theme: mono
 kind: 리서치 문서 · 읽기 화면 디자인
 code: RD-0925 · v2.0
 eyebrow: 문서 배색 리서치

@@ -10,7 +10,7 @@ from .themes_list import all_themes, describe
 from .themes import ROOT
 from .lint import review
 
-mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → list_themes에서 색을 골라 render_document. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
+mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → 기본 흑백으로 render_document(색을 요청한 경우에만 list_themes에서 선택). 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
 OUT = Path(os.environ.get('DOC_TEMPLATE_OUT', Path.home() / 'Documents' / 'doc-template'))
 
 @mcp.tool()
@@ -37,7 +37,7 @@ def get_starter(kind: str = 'plan') -> str:
 
 @mcp.tool()
 def render_document(markdown: str, theme: str = '', output_path: str = '', canonical_url: str = '', overwrite: bool = False) -> dict:
-    """옵시디언 Markdown을 문서 템플릿 HTML(한 파일)로 만든다. theme을 비우면 머리말의 theme(없으면 t1).
+    """옵시디언 Markdown을 문서 템플릿 HTML(한 파일)로 만든다. theme을 비우면 머리말의 theme(없으면 mono).
     output_path를 비우면 ~/Documents/doc-template/<제목>-<날짜>.html 에 저장한다. 결과에 파일 경로와 대비 검사 결과가 있다."""
     html, rep = render(markdown, theme=theme or None, canonical=canonical_url or None)
     if not output_path:
