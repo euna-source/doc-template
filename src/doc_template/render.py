@@ -46,7 +46,9 @@ CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="m2.5 6.2 2.3 2.3 4.7-5"/></svg>'
 
 
 def _md():
-    return MarkdownIt('commonmark', {'html': False, 'typographer': False}).use(front_matter_plugin).enable('table').enable('strikethrough')
+    md = MarkdownIt('commonmark', {'html': False, 'typographer': False}).use(front_matter_plugin).enable('table').enable('strikethrough')
+    md.renderer.rules['hardbreak'] = lambda tokens, idx, options, env: ' <br class="prose-break">\n'
+    return md
 
 
 def _inline(text):
@@ -348,7 +350,7 @@ def render(md_text, theme=None, template=None, canonical=None):
         '@TITLE': esc(title.replace('\n', ' ')), '@SHORT': esc(short), '@KIND': esc(kind.split('·')[0].strip()),
         '@DESC': esc(str(fm.get('deck', ''))[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',
         '@ISSUE_L': esc(kind), '@ISSUE_R': _linkify(str(fm.get('code', '')), fm), '@EYEBROW': esc(str(fm.get('eyebrow', fm.get('topic', '')))),
-        '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': esc(str(fm.get('deck', ''))), '@META': meta_html, '@OBI': obi_html,
+        '@H1': ' <br class="prose-break">'.join(esc(x) for x in title.split('\n')), '@DECK': esc(str(fm.get('deck', ''))), '@META': meta_html, '@OBI': obi_html,
         '@TOC': toc_html, '@NSEC': str(n), '@MAIN': ''.join(main), '@FOOT': esc(str(fm.get('footer', f'{kind} · 문서 템플릿'))),
         '@THEME_COLOR_L': th['light']['bg'], '@THEME_NAME': esc(th.get('meta', {}).get('name', theme_spec)),
         '/*@CSS*/': css, '/*@JS*/': js,

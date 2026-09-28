@@ -13,7 +13,7 @@
   --fs-h1:clamp(2.125rem,1.2rem + 3.4vw,3.5rem); --fs-h2:1.875rem; --fs-h3:1.375rem;
   --fs-ui:1rem; --fs-small:.9375rem; --fs-cap:.875rem; --fs-label:.8125rem; --fs-min:.75rem;
   /* 폭 [L31·L87·L92] */
-  --measure:36em; --wide:880px; --gutter:40px; --header-h:60px;
+  --measure:36em; --wide:48rem; --gutter:40px; --header-h:60px;
   /* 간격 */
   --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px; --s-7:32px; --s-8:48px; --s-9:64px; --s-10:96px;
   --sec-gap:var(--s-10); --block-gap:var(--s-7);
@@ -105,8 +105,8 @@ h1{font-family:var(--serif);font-weight:800;font-size:var(--fs-h1);line-height:1
 .toc-mobile{display:none}
 
 .doc{min-width:0;font-size:var(--fs-body);line-height:var(--lh-body)}
-/* 글줄은 36em, 표·통계·그림은 단 폭 전체 */
-.doc :is(p,ul,ol,blockquote,h2,h3,.callout,.legend,.sec-num){max-width:var(--measure)}
+/* 본문 열에서 글줄·표·제목의 오른쪽 경계를 일치시킨다. */
+.doc :is(p,ul,ol,blockquote,h2,h3,.callout,.legend,.sec-num){max-width:100%}
 .doc>section{position:relative}
 .doc>section+section{margin-top:var(--sec-gap);padding-top:var(--s-7)}
 /* 시그니처: 타공 헤어라인 — 절 시작마다 같은 간격의 작은 구멍 */
@@ -356,3 +356,9 @@ details.callout .dq{min-width:0;line-height:1.55}
   .doc h2,.doc h3,.sec-num{break-after:avoid}
   a{color:var(--text)}
 }
+
+/* 문맥상 문단은 유지하고 시각적 개행만 좁은 화면에서 다시 흐른다. */
+.cover-main .deck{max-width:100%}
+.doc :is(p,li,dd,blockquote){overflow-wrap:anywhere;line-break:strict}
+.doc p{text-wrap:pretty}
+@media(max-width:600px){br.prose-break{display:none}}
