@@ -300,7 +300,7 @@ def _sources(nodes, soup):
 
 def render(md_text, theme=None, template=None, canonical=None):
     fm, body = parse(md_text)
-    theme_spec = str(theme or fm.get('theme') or 't1')
+    theme_spec = str(theme or fm.get('theme') or 'mono')
     th = resolve(theme_spec)
     soup = BeautifulSoup(_inline(body), 'html.parser')
     kind_tpl = str(template or fm.get('template') or 'plan')

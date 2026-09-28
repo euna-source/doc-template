@@ -1,6 +1,6 @@
 ---
 template: plan
-theme: t1
+theme: mono
 kind: 기획 문서 · 팀 또는 프로젝트
 code: 문서번호 · v0.1
 eyebrow: 문서가 다루는 주제

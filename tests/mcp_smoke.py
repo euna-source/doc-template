@@ -15,8 +15,11 @@ async def main():
             g = await s.call_tool('get_guide', {})
             rv = await s.call_tool('review_document', {'markdown': md})
             prompts = [p.name for p in (await s.list_prompts()).prompts]
-            rd = await s.call_tool('render_document', {'markdown': md, 'theme': 'mono'})
+            rd = await s.call_tool('render_document', {'markdown': md})
             res = json.loads(rd.content[0].text)
+            assert res['theme'] == 'mono'
+            explicit = await s.call_tool('render_document', {'markdown': md, 'theme': 't1', 'overwrite': True})
+            assert json.loads(explicit.content[0].text)['theme'] == 't1'
             print(json.dumps({'tools': tools, 'themes': len(json.loads(th.content[0].text)) if th.content and th.content[0].text.startswith('[') else len(th.content),
                               'render': {k: res[k] for k in ('theme', 'sections', 'contrast_min', 'structure_score')}, 'prompts': prompts, 'guide_chars': len(g.content[0].text), 'review': json.loads(rv.content[0].text)['score'], 'exists': os.path.exists(res['path'])}, ensure_ascii=False))
 asyncio.run(main())
