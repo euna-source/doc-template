@@ -52,6 +52,11 @@ def _md():
     return MarkdownIt('commonmark', {'html': False, 'typographer': False}).use(front_matter_plugin).enable('table').enable('strikethrough')
 
 
+def _lines(text):
+    """머리말 글(띠지·덱·띠지 칸)의 줄바꿈을 선택적 시각 개행으로 — 제목과 같은 규칙, 모바일에서는 풀린다."""
+    return ' <br class="prose-break">'.join(str(text).strip('\n').split('\n'))
+
+
 def _inline(text):
     """==강조==, {{이름표}}, [^n] 각주를 HTML로(마크다운 렌더 뒤 텍스트에 적용)."""
     text = re.sub(r'==(.+?)==', r'<mark>\1</mark>', text)
@@ -376,9 +381,9 @@ def render(md_text, theme=None, template=None, canonical=None):
     obi = fm.get('obi') or {}
     obi_html = ''
     if obi:
-        cells = ''.join(f'<div><h2>{esc(str(c.get("h", "")))}</h2><p>{_inline(esc(str(c.get("p", ""))))}</p></div>' for c in (obi.get('cells') or [])[:3])
+        cells = ''.join(f'<div><h2>{esc(str(c.get("h", "")))}</h2><p>{_inline(_lines(esc(str(c.get("p", "")))))}</p></div>' for c in (obi.get('cells') or [])[:3])
         obi_html = (f'<section class="obi" aria-labelledby="obi-title"><div class="obi-head"><span class="obi-label" id="obi-title">{esc(str(obi.get("label", "결론")))}</span>'
-                    f'<p>{_inline(esc(str(obi.get("text", ""))))}</p></div>{f"<div class=obi-grid>{cells}</div>" if cells else ""}</section>')
+                    f'<p>{_inline(_lines(esc(str(obi.get("text", "")))))}</p></div>{f"<div class=obi-grid>{cells}</div>" if cells else ""}</section>')
     if decides:
         # 표지 아래 한 줄: 정하지 않은 것의 수와 결정 모음으로 가는 링크. 문구는 머리말 pending으로 바꾼다({n}이 수)
         line = str(fm.get('pending') or '아직 정하지 않은 것이 {n}가지 있습니다.').replace('{n}', str(len(decides)))
@@ -392,9 +397,9 @@ def render(md_text, theme=None, template=None, canonical=None):
     js = (TPL / 'doc.js').read_text()
     repl = {
         '@TITLE': esc(title.replace('\n', ' ')), '@SHORT': esc(short), '@KIND': esc(kind.split('·')[0].strip()),
-        '@DESC': esc(str(fm.get('deck', ''))[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',
+        '@DESC': esc(' '.join(str(fm.get('deck', '')).split())[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',
         '@ISSUE_L': esc(kind), '@ISSUE_R': _linkify(str(fm.get('code', '')), fm), '@EYEBROW': esc(str(fm.get('eyebrow', fm.get('topic', '')))),
-        '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', esc(str(fm.get('deck', '')))), '@META': meta_html, '@OBI': obi_html,
+        '@H1': '<br>'.join(esc(x) for x in title.split('\n')), '@DECK': _lines(re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', esc(str(fm.get('deck', ''))))), '@META': meta_html, '@OBI': obi_html,
         '@TOC': toc_html, '@BODYCLASS': f'tpl-{esc(kind_tpl)}', '@BAND': band_html, '@DRAWERS': ''.join(drawers) + ('<div class="drawer-bg" id="drawer-bg" hidden></div>' if drawers else ''), '@NSEC': str(n), '@MAIN': ''.join(main), '@FOOT': esc(str(fm.get('footer', f'{kind} · 문서 템플릿'))),
         '@THEME_COLOR_L': th['light']['bg'], '@THEME_NAME': esc(th.get('meta', {}).get('name', theme_spec)),
         '/*@CSS*/': css, '/*@JS*/': js,
