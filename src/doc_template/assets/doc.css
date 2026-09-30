@@ -82,7 +82,7 @@ h1{font-family:var(--serif);font-weight:800;font-size:var(--fs-h1);line-height:1
 .dot.half{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
 
 /* ── 띠지: 본문 폭에 맞춘 결론 한 줄 + 세 칸 ── */
-.obi{margin-top:var(--s-8);max-width:calc(var(--measure) * 1.125 + 64px);border:var(--rule) solid var(--text)}
+.obi{margin-top:var(--s-8);max-width:none;border:var(--rule) solid var(--text)}
 .obi-head{background:var(--obi);color:var(--obitext);padding:var(--s-6) var(--s-7);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .obi-label{display:inline-block;font-size:var(--fs-min);font-weight:700;letter-spacing:.08em;border:1.5px solid currentColor;padding:2px 8px;margin-bottom:var(--s-3)}
 .obi-head p{font-size:var(--fs-obi);font-weight:700;line-height:1.45;text-wrap:pretty}
@@ -178,7 +178,7 @@ details.callout .dq{min-width:0;line-height:1.55}
 .sec-pending{display:inline-flex;align-items:center;margin-left:var(--s-3);vertical-align:top;font-size:var(--fs-min);font-weight:700;line-height:1;padding:4px 7px;border:1.5px solid var(--accent);color:var(--accent);border-radius:var(--r-mark);text-decoration:none;letter-spacing:.02em}
 .sec-pending:hover{background:var(--accent);color:var(--bg)}
 /* 표지 아래 한 줄 */
-.pending{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-top:var(--s-4);max-width:calc(var(--measure) * 1.125 + 64px);font-size:var(--fs-small);color:var(--muted)}
+.pending{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-top:var(--s-4);max-width:none;font-size:var(--fs-small);color:var(--muted)}
 .pending a{font-weight:700;color:var(--text);text-underline-offset:3px}
 .hub-toggle{margin:0 0 var(--s-3);border:0;background:none;padding:6px 0;min-height:44px;font:inherit;font-size:var(--fs-cap);font-weight:600;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .hub-toggle:hover{color:var(--text)}
