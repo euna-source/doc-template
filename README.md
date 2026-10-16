@@ -93,6 +93,15 @@ doc-template themes                          # 테마 목록
 
 전체 예시는 `doc-template starter plan`과 `examples/sample-research.md`에 있습니다.
 
+## 문서 템플릿 모음 유형(kinds)
+
+문서 템플릿 모음의 여섯 유형은 `doc_template.kinds`가 그립니다: `prd`(기획서형 개발요건정의서) · `research` · `catalog`(목록형) · `schedule`(일정표형) · `minutes`(회의록형) · `pt`(발표형). 위의 `plan`(기획안)과 `prd`는 다른 문서입니다.
+
+```sh
+doc-template kinds render minutes 회의록.md -o 회의록.html --theme mono
+echo '{"fn":"render","args":["# 제목\n","pt"]}' | doc-template kinds call   # 다른 파이썬에서 부를 때(JSON 입출력)
+```
+
 ## 공개 배포(선택)
 
 GitHub Pages가 켜진 저장소를 `DOC_TEMPLATE_PAGES_REPO=owner/repo`로 지정하면 `doc-template publish 기획.html 기획-slug`로 올리고 공개 URL을 받습니다. `gh` 로그인이 필요합니다. doc-template이 만든 HTML만 올라가고, 같은 저장소에 동시에 올리면 차례로 처리합니다. 회사 내부 문서는 공개 저장소에 올리지 마세요.
@@ -103,4 +112,5 @@ GitHub Pages가 켜진 저장소를 `DOC_TEMPLATE_PAGES_REPO=owner/repo`로 지�
 uv run --with-editable . --with playwright python tests/verify_render.py   # 11테마 × 4폭 × 2모드
 uv run --with-editable . python tests/test_safety.py                       # 주입·경로·덮어쓰기
 uv run --with-editable . python tests/mcp_smoke.py                         # MCP 도구 호출
+uv run --with-editable . python tests/test_kinds.py                        # 모음 유형 렌더·호출
 ```

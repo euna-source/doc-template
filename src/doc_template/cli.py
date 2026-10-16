@@ -16,7 +16,28 @@ def main(argv=None):
     s = sub.add_parser('starter', help='시작 문서 출력'); s.add_argument('kind', choices=['plan', 'research', 'schedule', 'catalog']); s.add_argument('-o', '--out')
     pb = sub.add_parser('publish', help='GitHub Pages에 올리기'); pb.add_argument('html'); pb.add_argument('slug'); pb.add_argument('--repo')
     sub.add_parser('mcp', help='MCP 서버(stdio) 실행')
+    k = sub.add_parser('kinds', help='문서 템플릿 모음 유형 렌더(prd·research·catalog·schedule·minutes·pt)')
+    ks = k.add_subparsers(dest='kcmd', required=True)
+    kr = ks.add_parser('render', help='원고를 유형 디자인으로'); kr.add_argument('kind'); kr.add_argument('src'); kr.add_argument('-o', '--out'); kr.add_argument('--theme'); kr.add_argument('--font')
+    ks.add_parser('call', help='표준 입력 JSON {fn, args, kwargs} → 표준 출력 JSON {result} (스튜디오·모음 페이지 연결용)')
     a = p.parse_args(argv)
+    if a.cmd == 'kinds':
+        from .kinds import call as _kcall
+        if a.kcmd == 'render':
+            from .kinds.render import render as _krender
+            h = _krender(Path(a.src).read_text(encoding='utf-8'), a.kind, theme=a.theme, font=a.font)
+            out = Path(a.out or Path(a.src).with_suffix('.html')); out.write_text(h, encoding='utf-8')
+            print(json.dumps({'out': str(out.resolve()), 'kind': a.kind}, ensure_ascii=False))
+        else:
+            try:
+                req = json.loads(sys.stdin.buffer.read().decode('utf-8'))
+                if not (isinstance(req, dict) and isinstance(req.get('fn'), str) and isinstance(req.get('args', []), list) and isinstance(req.get('kwargs', {}), dict)):
+                    raise ValueError('요청은 {"fn": 이름, "args": [...], "kwargs": {...}} 모양이어야 한다')
+                res = {'result': _kcall(req['fn'], *req.get('args', []), **req.get('kwargs', {}))}
+            except (ValueError, TypeError, KeyError) as exc:  # JSON 오류(ValueError 하위)도 여기 — 부른 쪽이 같은 종류로 다시 올린다
+                res = {'error': {'type': 'ValueError' if isinstance(exc, ValueError) else type(exc).__name__, 'message': str(exc)}}
+            sys.stdout.buffer.write(json.dumps(res, ensure_ascii=False).encode('utf-8'))
+        return
     if a.cmd == 'render':
         html, rep = render(Path(a.src).read_text(encoding='utf-8'), theme=a.theme, canonical=a.canonical)
         out = Path(a.out or Path(a.src).with_suffix('.html')); out.write_text(html, encoding='utf-8')
