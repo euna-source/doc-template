@@ -30,7 +30,7 @@ def main(argv=None):
         from . import modules as _M
         if a.ktcmd == 'list':
             print(json.dumps(_M.catalog(), ensure_ascii=False, indent=1)); return
-        src = Path(a.html); page = src.read_text(encoding='utf-8')
+        src = Path(a.html); page = _M.read(src)
         if a.ktcmd == 'apply':
             data = {}
             for kv in a.data:
@@ -39,7 +39,7 @@ def main(argv=None):
             out_html = _M.apply(page, [m.strip() for m in a.mods.split(',') if m.strip()], data)
         else:
             out_html = _M.remove(page, [m.strip() for m in a.only.split(',')] if a.only else None)
-        out = Path(a.out or src); out.write_text(out_html, encoding='utf-8')
+        out = Path(a.out or src); _M.write(out, out_html)
         print(json.dumps({'out': str(out.resolve()), 'bytes': len(out_html.encode())}, ensure_ascii=False)); return
     if a.cmd == 'kinds':
         from .kinds import call as _kcall

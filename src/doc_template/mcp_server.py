@@ -73,25 +73,27 @@ def list_modules() -> list:
 @mcp.tool()
 def apply_modules(html_path: str, modules: list[str], data: dict | None = None, output_path: str = '', overwrite: bool = False) -> dict:
     """이미 있는 HTML 페이지에 부품(look·toggle·history·sources …)을 덧붙인다. 원본 구조는 그대로 두고, 다시 붙이면 바꿔 끼우며,
-    remove_modules로 떼면 원본과 같아진다. data는 {부품: 자료}(history·sources는 필수, 모양은 list_modules). output_path를 비우면 같은 폴더에 이름-kit.html."""
-    from .modules import apply
-    src = Path(html_path).expanduser().resolve()
-    if src.suffix.lower() not in ('.html', '.htm') or not src.is_file():
-        raise ValueError('HTML 파일만 다룹니다')
+    remove_modules로 떼면 원본과 같아진다. data는 {부품: 자료}(history·sources는 필수, 모양은 list_modules). output_path를 비우면 같은 폴더에 이름-kit.html(원본은 덮지 않는다)."""
+    from .modules import apply, read, write
+    src = _html_in(html_path)
     out = _safe_out(output_path or str(src.with_name(src.stem + '-kit.html')), overwrite)
-    page = apply(src.read_text(encoding='utf-8'), modules, data or {})
-    out.write_text(page, encoding='utf-8')
+    write(out, apply(read(src), modules, data or {}))
     return {'path': str(out), 'modules': modules}
 
 @mcp.tool()
 def remove_modules(html_path: str, modules: list[str] | None = None, output_path: str = '', overwrite: bool = False) -> dict:
-    """apply_modules로 붙인 부품을 뗀다(modules를 비우면 전부)."""
-    from .modules import remove
-    src = Path(html_path).expanduser().resolve()
-    out = _safe_out(output_path or str(src), overwrite or not output_path)
-    page = remove(src.read_text(encoding='utf-8'), modules or None)
-    out.write_text(page, encoding='utf-8')
+    """apply_modules로 붙인 부품을 뗀다(modules를 비우면 전부). output_path를 비우면 같은 폴더에 이름-plain.html(원본은 덮지 않는다)."""
+    from .modules import remove, read, write
+    src = _html_in(html_path)
+    out = _safe_out(output_path or str(src.with_name(src.stem + '-plain.html')), overwrite)
+    write(out, remove(read(src), modules or None))
     return {'path': str(out)}
+
+def _html_in(path):
+    src = Path(path).expanduser().resolve()
+    if src.suffix.lower() not in ('.html', '.htm') or not src.is_file():
+        raise ValueError('HTML 파일만 다룹니다')
+    return src
 
 @mcp.tool()
 def publish_document(html_path: str, slug: str) -> dict:

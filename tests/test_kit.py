@@ -12,7 +12,7 @@ assert {'look', 'toggle', 'history', 'sources', 'verdict'} <= set(ids), ids
 data = {'history': {'versions': [{'version': '1.1', 'date': '2026-10-17', 'changes': [{'type': 'new', 'text': '2회차 안내', 'target': '2회차가 곧바로'}]}]},
         'sources': {'sources': [{'title': '운영 기록 </script><script>alert(1)</script>', 'url': 'https://ex.com', 'state': '확인'}]}}
 one = M.apply(page, ['look', 'toggle', 'history', 'sources'], data)
-body = lambda h: re.sub(r'<!--dk:start ([a-z0-9-]+)-->.*?<!--dk:end \1-->', '', h, flags=re.S)
+body = lambda h: re.sub(r'<!--doc-template-kit:start ([a-z0-9-]+)-->.*?<!--doc-template-kit:end \1-->', '', h, flags=re.S)
 assert body(one) == page, '표식 사이를 빼면 원본과 같아야 한다(원본 구조 무변경)'
 assert M.remove(one) == page, '떼면 원본과 바이트까지 같다'
 two = M.apply(one, ['look', 'toggle', 'history', 'sources'], data)
@@ -39,4 +39,20 @@ r = subprocess.run([sys.executable, '-m', 'doc_template.cli', 'kit', 'apply', st
 assert r.returncode == 0, r.stderr
 r = subprocess.run([sys.executable, '-m', 'doc_template.cli', 'kit', 'remove', str(t / 'o.html'), '-o', str(t / 'back.html')], capture_output=True, text=True)
 assert (t / 'back.html').read_text() == page
+# 스크립트 안의 </head>·</body> 글자, 원본의 비슷한 주석, CRLF 줄끝
+tricky = ('<!doctype html>\r\n<html><head>\r\n<script>var s="</head></body>";</script>\r\n<!--dk:start look--><p>예시</p><!--dk:end look-->\r\n</head>\r\n'
+          '<body>\r\n<p>본문</p>\r\n<script>document.write("</body>")</script>\r\n</body></html>\r\n')
+k = M.apply(tricky, ['look', 'toggle'])
+assert 'var s="</head></body>";' in k and k.index('<style data-dk="look">') > k.index('var s=') and k.index('<script data-dk="toggle">') > k.index('document.write'), '진짜 태그 자리에만'
+assert M.remove(k) == tricky and '<!--dk:start look--><p>예시</p>' in M.remove(k), '원본의 비슷한 주석은 남긴다'
+(t / 'crlf.html').write_bytes(tricky.encode())
+subprocess.run([sys.executable, '-m', 'doc_template.cli', 'kit', 'apply', str(t / 'crlf.html'), '-o', str(t / 'crlf-k.html'), '--with', 'look'], check=True, capture_output=True)
+subprocess.run([sys.executable, '-m', 'doc_template.cli', 'kit', 'remove', str(t / 'crlf-k.html'), '-o', str(t / 'crlf-b.html')], check=True, capture_output=True)
+assert (t / 'crlf-b.html').read_bytes() == tricky.encode(), 'CRLF까지 바이트 동일'
+# MCP 떼기는 원본을 덮지 않는다
+from doc_template import mcp_server as S
+(t / 'k.html').write_text(M.apply(page, ['look']))
+r = S.remove_modules(str(t / 'k.html')); assert r['path'].endswith('k-plain.html') and 'data-dk="look"' in (t / 'k.html').read_text()
+try: S.remove_modules(str(t / 'h.json')); raise AssertionError('html만')
+except ValueError: pass
 print('PASS kit: 원본 보존, 떼면 동일, 바꿔 끼움, 자료 안전, 엔진 펜스, CLI')

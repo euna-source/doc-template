@@ -11,9 +11,28 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-_START = '<!--dk:start {id}-->'
-_END = '<!--dk:end {id}-->'
-_BLOCK = re.compile(r'<!--dk:start ([a-z0-9-]+)-->.*?<!--dk:end \1-->', re.S)
+_START = '<!--doc-template-kit:start {id}-->'
+_END = '<!--doc-template-kit:end {id}-->'
+_BLOCK = re.compile(r'<!--doc-template-kit:start ([a-z0-9-]+)-->.*?<!--doc-template-kit:end \1-->', re.S)
+_OPAQUE = re.compile(r'<script\b.*?</script\s*>|<style\b.*?</style\s*>|<!--.*?-->|<textarea\b.*?</textarea\s*>', re.S | re.I)
+
+
+def read(path):
+    """줄끝(CRLF)까지 그대로 읽는다 — 떼면 바이트까지 같게."""
+    return Path(path).read_bytes().decode('utf-8')
+
+
+def write(path, text):
+    Path(path).write_bytes(text.encode('utf-8'))
+
+
+def _tag_pos(page, rx, last=False):
+    """스크립트·스타일·주석 안의 글자는 건너뛰고 진짜 태그 자리만 찾는다."""
+    masked = _OPAQUE.sub(lambda m: ' ' * len(m.group(0)), page)
+    hits = list(re.finditer(rx, masked, re.I))
+    if not hits:
+        return None
+    return hits[-1] if last else hits[0]
 GENERATOR = '<meta name="generator" content="doc-template kit">'
 
 
@@ -61,7 +80,7 @@ def apply(page, ids, data=None):
     data = data or {}
     if not ids:
         raise ValueError('붙일 부품을 하나 이상 고르세요')
-    if not re.search(r'</head\s*>', page, re.I) or not re.search(r'</body\s*>', page, re.I):
+    if not _tag_pos(page, r'</head\s*>') or not _tag_pos(page, r'</body\s*>'):
         raise ValueError('<head>와 <body>가 있는 HTML 문서에만 붙입니다')
     page = remove(page, set(ids))
     for mid in ids:
@@ -73,12 +92,15 @@ def apply(page, ids, data=None):
         head = f'<style data-dk="{mid}">{c}</style>' if c else ''
         tail = (_json_script(mid, data[mid]) if mid in data else '') + (f'<script data-dk="{mid}">{j}</script>' if j else '')
         if head:
-            page = re.sub(r'</head\s*>', lambda m: _START.format(id=mid) + head + _END.format(id=mid) + m.group(0), page, count=1, flags=re.I)
+            i = _tag_pos(page, r'</head\s*>').start()
+            page = page[:i] + _START.format(id=mid) + head + _END.format(id=mid) + page[i:]
         if tail:
-            i = [m.start() for m in re.finditer(r'</body\s*>', page, re.I)][-1]
+            i = _tag_pos(page, r'</body\s*>', last=True).start()
             page = page[:i] + _START.format(id=mid + '-body') + tail + _END.format(id=mid + '-body') + page[i:]
     if 'name="generator" content="doc-template' not in page[:4000]:   # 배포(publish)가 kit 페이지를 알아보게
-        page = re.sub(r'<head([^>]*)>', lambda m: m.group(0) + _START.format(id='generator') + GENERATOR + _END.format(id='generator'), page, count=1, flags=re.I)
+        h = _tag_pos(page, r'<head\b[^>]*>')
+        if h:
+            page = page[:h.end()] + _START.format(id='generator') + GENERATOR + _END.format(id='generator') + page[h.end():]
     return page
 
 
