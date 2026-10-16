@@ -113,4 +113,6 @@ uv run --with-editable . --with playwright python tests/verify_render.py   # 11�
 uv run --with-editable . python tests/test_safety.py                       # 주입·경로·덮어쓰기
 uv run --with-editable . python tests/mcp_smoke.py                         # MCP 도구 호출
 uv run --with-editable . python tests/test_kinds.py                        # 모음 유형 렌더·호출
+uv run --with-editable . python tests/test_publish_assets.py               # 배포 때 그림·도식 함께 올리기
+uv run --with-editable . python tests/test_ko_style.py                     # 한국어 문체 점검
 ```

@@ -33,6 +33,37 @@ VERDICT = re.compile(r'\{\{\s*(추천|보류|채택|기각|채택 제안|불채�
 NARRATE = re.compile(r'(?:^|[.!?]\s+)이\s*(?:기획|문서|안|제안)[은는이가]\s[^.\n]{0,80}?(?:택합니다|다룹니다|제안합니다|목표로\s*합니다|합니다)\.', re.M)
 
 
+# 한국어 AI 문체 — im-not-ai(github.com/epoko77-ai/im-not-ai, MIT)의 분류(A·C·D·I) 가운데 규칙만으로 오탐이 적은 것만 골라 옮겼다.
+# 실제 업무 문서 38건에 돌려 오탐이 난 「~에 있어서」(장소 뜻)·「~할 때입니다」(때 뜻)는 뺐다(2026-10-17).
+# 고치는 방법은 제안만 한다(수치·이름·인용은 손대지 않는다). 사람 글에도 가끔 나오는 표현이라 「제안」 등급이고, 한 문서에 몰릴 때만 낸다.
+KO_STYLE = [
+    ('ko-double-passive', re.compile(r'되어(?:지|진|질|졌|져)|지게\s*됩니다|지게\s*된다'), 1, '이중 피동(되어지다·지게 되다)입니다.', '「~된다」나 능동으로 쓰세요. 예: 판단되어진다 → 판단된다.'),
+    ('ko-beyond', re.compile(r'단순한\s*\S+(?:\s*\S+)?\s*(?:을|를)?\s*넘어'), 1, '「단순한 X를 넘어 Y」는 사람 글에 거의 없는 상승 공식입니다.', '「X만이 아니라 Y다」로 풀거나 앞부분을 지우세요.'),
+    ('ko-significance', re.compile(r'시사하는\s*바가\s*크|주목할\s*만하|매우\s*중요합니다|매우\s*중요하다'), 1, '의의를 부풀리는 관용구입니다.', '지우거나, 무엇이 왜 중요한지 구체적인 결론으로 바꾸세요.'),
+    ('ko-enum-intro', re.compile(r'크게\s*(?:두|세|네|다섯)\s*가지로\s*(?:나눌|정리할|볼)\s*수|다음과\s*같(?:습니다|다)[.:]'), 1, '열거를 예고하는 도입구입니다.', '도입구를 빼고 바로 첫 항목부터 쓰세요.'),
+    ('ko-thats-it', re.compile(r'다는\s*(?:것|뜻)(?:이다|입니다)'), 3, '「~다는 것이다」 결말이 반복됩니다.', '「~다」로 바로 끝내세요.'),
+    ('ko-summary-words', re.compile(r'결론적으로|요약하면|정리하자면|이를\s*통해'), 4, '결산 접속어(결론적으로·요약하면·이를 통해)가 몰려 있습니다.', '한두 번만 남기고 지우세요.'),
+    ('ko-comma-after-connective', re.compile(r'[가-힣](?:고|며|지만|면서|아서|어서),\s'), 6, '연결어미 뒤 쉼표가 많습니다(AI 글의 강한 신호).', '「-고,」「-며,」의 쉼표를 지우세요.'),
+]
+
+
+def _ko_style(body, add):
+    text = re.sub(r'```.*?```', '', body, flags=re.S)
+    text = re.sub(r'`[^`]*`', '', text)
+    for rid, rx, minimum, msg, fix in KO_STYLE:
+        hits = rx.findall(text)
+        if rid == 'ko-comma-after-connective' and len(hits) * 1000 < 4 * max(1, len(re.sub(r'\s', '', text))):
+            continue   # 긴 문서에서는 밀도(1,000자당 4곳 이상)로 본다
+        if len(hits) >= minimum:
+            ex = rx.search(text)
+            snip = text[max(0, ex.start() - 12):ex.end() + 12].replace('\n', ' ').strip()
+            add(rid, '제안', '문체', f'{msg} ({len(hits)}곳, 예: 「…{snip}…」)', fix)
+    paren = re.findall(r'[가-힣]+\s*\(([A-Za-z][A-Za-z .-]{2,40})\)', text)
+    rep = sorted({x for x in paren if paren.count(x) >= 2})
+    if rep:
+        add('ko-paren-english', '제안', '문체', f'같은 영어 병기가 되풀이됩니다({", ".join(rep[:3])}).', '첫 등장에만 괄호로 병기하고 그다음은 한국어만 쓰세요.')
+
+
 def review(md_text):
     issues = []
     add = lambda i, lvl, where, msg, fix: issues.append(dict(id=i, level=lvl, where=where, message=msg, fix=fix))
@@ -123,6 +154,7 @@ def review(md_text):
             add('narrator', '제안', where, f'「{m.group(0).lstrip(".!? ").strip()[:36]}…」은 제삼자가 남의 기획을 소개하는 말투입니다.',
                 '기획자가 직접 판단을 말하게 쓰세요. 예: 「지금 저희에게는 … 가 맞다고 판단했습니다.」')
 
+    _ko_style(body, add)
     if total > LIMITS['body_chars']:
         add('body-long', '경고', '문서', f'본문이 {total}자입니다.', '한 문서 한 결정. 독자가 다른 내용을 별도 문서로 나누세요.')
     if marks_total > LIMITS['marks_total']:

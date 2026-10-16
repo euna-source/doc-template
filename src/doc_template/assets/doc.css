@@ -124,7 +124,7 @@ h1{font-family:var(--serif);font-weight:800;font-size:var(--fs-h1);line-height:1
 .doc h3{font-size:var(--fs-h3);line-height:1.4;font-weight:700;margin:var(--s-8) 0 var(--s-3)}
 .doc h2+h3{margin-top:0}
 .lead{font-size:var(--fs-lead);line-height:1.65}
-sup.ref{font-size:.7em;line-height:0;margin-left:1px}
+sup.ref{font-size:max(.7em,.75rem);line-height:0;margin-left:1px}
 sup.ref a{text-decoration:none;font-weight:600;padding:0 2px;color:var(--link)}
 
 /* 형광펜 [L119·L120·L121] */
