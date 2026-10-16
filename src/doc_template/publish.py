@@ -44,6 +44,8 @@ def assets(html_path):
         p = (base / unquote(u.path)).resolve()
         if p == src or p in seen or not p.is_file() or not p.is_relative_to(base):
             continue
+        if p.relative_to(base).as_posix().lower() == 'index.html':
+            continue   # 배포 본문 자리(index.html)는 문서 자신만 쓴다
         ext = p.suffix.lower()
         if ext == '.html':
             if not any(m in p.read_text(encoding='utf-8', errors='replace')[:4000] for m in DIAGRAM_MARKS):
@@ -92,14 +94,16 @@ def publish(html_path, slug, repo=None, message=None, wait=90):
         else:
             _run('gh', 'repo', 'clone', repo, str(cache), '--', '-q', '--depth', '1')
         dest = cache / slug
-        dest.mkdir(exist_ok=True)
+        if dest.exists():
+            shutil.rmtree(dest)   # 이 slug 폴더는 publish가 통째로 맡는다 — 이번에 뺀 그림이 공개 주소에 남지 않게
+        dest.mkdir()
         shutil.copyfile(src, dest / 'index.html')
         files = [f'{slug}/index.html']
         for a_src, rel in assets(src):
             (dest / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(a_src, dest / rel)
             files.append(f'{slug}/{rel}')
-        _run('git', 'add', '--', *files, cwd=cache)
+        _run('git', 'add', '-A', '--', slug, cwd=cache)
         changed = subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=cache).returncode != 0
         if changed:
             _run('git', 'commit', '-q', '-m', message or f'doc-template: {slug}', cwd=cache)

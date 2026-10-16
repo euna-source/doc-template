@@ -33,4 +33,12 @@ res = publish(src, 'figure-doc', repo='me/pages', wait=0)
 listed = subprocess.run(['git', '--git-dir', str(bare), 'ls-tree', '-r', '--name-only', 'main'], capture_output=True, text=True, check=True).stdout.splitlines()
 assert sorted(x for x in listed if x.startswith('figure-doc/')) == ['figure-doc/flow.html', 'figure-doc/img/flow.svg', 'figure-doc/index.html', 'figure-doc/shot one.png'], listed
 assert res['changed'] and len(res['files']) == 4
+# 이름이 index.html인 도식은 본문을 덮지 않고, 다시 배포할 때 뺀 그림은 지워진다
+(doc / 'index-src.md').write_text('')
+alt = doc / 'report.html'; alt.write_text(render(md + '\n[본문 자리](index.html)\n')[0].replace('img/flow.svg', 'gone.svg'))
+res2 = publish(alt, 'figure-doc', repo='me/pages', wait=0)
+listed = subprocess.run(['git', '--git-dir', str(bare), 'ls-tree', '-r', '--name-only', 'main'], capture_output=True, text=True, check=True).stdout.splitlines()
+assert 'figure-doc/img/flow.svg' not in listed, listed
+body = subprocess.run(['git', '--git-dir', str(bare), 'show', 'main:figure-doc/index.html'], capture_output=True, text=True, check=True).stdout
+assert '본문 자리' in body, 'index.html은 문서 자신이어야 한다'
 print('PASS publish assets: relative images and diagram html only, committed to pages repo')
