@@ -12,7 +12,7 @@ from .themes_list import all_themes, describe
 from .themes import ROOT
 from .lint import review
 
-mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → 기본 흑백으로 render_document(색을 요청한 경우에만 list_themes에서 선택). 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
+mcp = _Server('doc-template', instructions='기획·리서치 문서를 옵시디언 Markdown으로 쓰고 HTML로 렌더한다. 순서: get_guide로 구조 원칙을 읽고 → get_starter로 뼈대를 받아 쓰고 → review_document로 구조를 점검해 경고를 고친 뒤 → 원고를 옵시디언 볼트에 .md로 저장했으면 render_file(같은 폴더에 .html), 아니면 render_document — 기본 흑백(색을 요청한 경우에만 list_themes에서 선택). 그림·도식은 문서 폴더 안 상대 경로로 걸면 publish_document가 함께 올린다. 원칙 요지: 결론을 띠지 한 문장으로 맨 위에, 소제목은 절의 결론 문장, 한 문서 한 독자(개발 상세·참가자 문안은 별도 문서), 절 600자·본문 3,000자 안, 표 8행 안, 강조는 문서 전체 1~3곳, 정하지 않은 것은 본문 이름표 대신 결정 모음 한 곳(> [!decide]- 질문), 기획자가 자기 판단을 말하는 목소리로, 이미 정한 이름(프로모션·서비스·기능명)은 바꾸지 않는다, 다음 행동은 동사·담당·기한. 메타에는 「읽는 사람」 대신 상위 문서(티켓 번호는 머리말 jira 주소로 자동 링크). publish_document는 외부 공개라 사용자 확인 뒤에만 부른다.')
 OUT = Path(os.environ.get('DOC_TEMPLATE_OUT', Path.home() / 'Documents' / 'doc-template'))
 
 @mcp.tool()
@@ -66,7 +66,7 @@ def render_file(path: str, theme: str = '', overwrite: bool = False) -> dict:
 
 @mcp.tool()
 def publish_document(html_path: str, slug: str) -> dict:
-    """렌더한 HTML을 GitHub Pages 저장소(환경변수 DOC_TEMPLATE_PAGES_REPO)에 올리고 공개 URL을 돌려준다. 외부 공개이므로 사용자 확인 뒤에만 부른다."""
+    """렌더한 HTML을 GitHub Pages 저장소(환경변수 DOC_TEMPLATE_PAGES_REPO)에 올리고 공개 URL을 돌려준다. 문서 폴더 안 상대 경로로 건 그림(png·jpg·gif·webp·avif·svg)과 도식 HTML(Archify·doc-template)도 함께 올린다(files). 외부 공개이므로 사용자 확인 뒤에만 부른다."""
     from .publish import publish
     return publish(html_path, slug)
 
