@@ -14,6 +14,9 @@ async def main():
             md = st.content[0].text
             g = await s.call_tool('get_guide', {})
             rv = await s.call_tool('review_document', {'markdown': md})
+            for k in ('schedule', 'catalog'):
+                r = await s.call_tool('get_starter', {'kind': k})
+                assert r.is_error and 'doc-templates' in r.content[0].text, k
             prompts = [p.name for p in (await s.list_prompts()).prompts]
             rd = await s.call_tool('render_document', {'markdown': md})
             res = json.loads(rd.content[0].text)

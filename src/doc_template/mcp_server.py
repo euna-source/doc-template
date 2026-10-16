@@ -3,8 +3,10 @@ import os, re, datetime
 from pathlib import Path
 try:  # mcp 2.x
     from mcp.server.mcpserver import MCPServer as _Server
+    from mcp.server.mcpserver.exceptions import ToolError
 except ImportError:  # mcp 1.x
     from mcp.server.fastmcp import FastMCP as _Server
+    from mcp.server.fastmcp.exceptions import ToolError
 from .render import render
 from .themes_list import all_themes, describe
 from .themes import ROOT
@@ -32,7 +34,7 @@ def review_document(markdown: str) -> dict:
 def get_starter(kind: str = 'plan') -> str:
     """시작 문서(Markdown)와 문법. kind: plan(기획) | research(리서치). 머리말의 theme 한 줄로 색을 고른다."""
     if kind in ('schedule', 'catalog'):
-        raise ValueError("일정표형·목록형 자동 틀은 원본의 달력·서랍·필터 흐름을 옮기지 못해 쓰지 않는다(2026-09-25). 기준 원본 페이지를 틀로 삼는다 — 문서 템플릿 모음 참고")
+        raise ToolError("일정표형·목록형 자동 틀은 원본의 달력·서랍·필터 흐름을 옮기지 못해 쓰지 않는다(2026-09-25). 기준 원본 페이지를 틀로 삼는다 — 문서 템플릿 모음 https://euna-source.github.io/public-pages/doc-templates/")
     if kind not in ('plan', 'research'):
         raise ValueError("kind는 plan 또는 research")
     return (ROOT / 'starters' / f'{kind}.md').read_text(encoding='utf-8')
