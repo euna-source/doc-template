@@ -1,0 +1,7 @@
+.dk-verdict{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.dk-verdict section{border:2px solid currentColor;border-radius:12px;padding:12px 14px;min-width:0}
+.dk-verdict section.v-ok{color:#067D14}.dk-verdict section.v-mid{color:#A63F08;border-style:dashed}.dk-verdict section.v-no{color:#B4231A;border-style:dotted}
+.dk-verdict h4{margin:0 0 6px;font-size:15px;letter-spacing:-.01em}.dk-verdict ul{margin:0;padding-left:18px;color:var(--text,#121212)}.dk-verdict li{margin:4px 0}
+.dk-verdict li small{display:block;color:var(--muted,#6B6B73);font-size:.86em}
+[data-bw] .dk-verdict section,.dk-verdict.bw section{color:var(--text,#121212)}
+@media (max-width:640px){.dk-verdict{grid-template-columns:1fr}}

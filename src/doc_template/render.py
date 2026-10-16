@@ -13,6 +13,7 @@
   - [ ] / - [/] / - [x] 할 일 @담당 ~기한   다음 행동(대기·진행·완료)
   | 표 |                  모바일에서 카드. 첫 칸이 '★ '로 시작하면 추천 행
   {{가안}}              이름표(태그)
+  ```verdict 줄마다 "확정|추정|불가 | 무엇 | 조건" (판정 3단 부품)
   ```stats  줄마다 "값 | 단위 | 설명"
   [^n] 와 '## 출처' 목록   각주 ↔ 출처. 출처 줄 끝의 {확인|일부|미확인}
   ## 변경 이력 표         이력 표
@@ -225,6 +226,10 @@ def _transform_blocks(soup, fm):
                              f'<span class="what">{f"<span class=sr>{sr}</span>" if sr else ""}{body}</span>'
                              f'<span class="who"><span>{esc(who.group(1)) if who else "담당 미정"}</span><span>{esc(due.group(1)) if due else "기한 미정"}</span></span></li>')
             ul.replace_with(BeautifulSoup(f'<ul class="actions">{"".join(items)}</ul>', 'html.parser'))
+    # 판정 3단(부품 verdict)
+    for code in soup.find_all('code', class_='language-verdict'):
+        from .modules import verdict_html
+        code.parent.replace_with(BeautifulSoup(verdict_html(code.get_text()), 'html.parser'))
     # 수치 블록
     for code in soup.find_all('code', class_='language-stats'):
         rows = [l.split('|') for l in code.get_text().strip().splitlines() if l.strip()]
@@ -397,6 +402,9 @@ def render(md_text, theme=None, template=None, canonical=None):
     css = ((TPL / 'doc.css').read_text() + '\n' + (TPL / 'components.css').read_text()).replace('/*@THEME*/', _theme_css(th)).replace(
         '/*@PRINT*/', ':root,:root:not([data-theme="light"]),:root[data-theme="dark"]{' + css_vars(th, 'light') + ';--bg:#FFFFFF;--body-size:11pt;color-scheme:light}')
     js = (TPL / 'doc.js').read_text()
+    if 'class="dk-verdict"' in ''.join(main):   # 쓴 부품의 CSS만 싣는다
+        from . import modules as _M
+        css += '\n' + _M.css('verdict')
     repl = {
         '@TITLE': esc(title.replace('\n', ' ')), '@SHORT': esc(short), '@KIND': esc(kind.split('·')[0].strip()),
         '@DESC': esc(' '.join(str(fm.get('deck', '')).split())[:150]), '@CANONICAL': f'<link rel="canonical" href="{esc(canonical)}">' if canonical else '',

@@ -102,6 +102,26 @@ doc-template kinds render minutes 회의록.md -o 회의록.html --theme mono
 echo '{"fn":"render","args":["# 제목\n","pt"]}' | doc-template kinds call   # 다른 파이썬에서 부를 때(JSON 입출력)
 ```
 
+## 부품(모듈) — 아무 페이지에나 붙이기
+
+템플릿은 부품을 조립한 것이다. 부품은 `src/doc_template/modules/<id>/`에 폴더 하나(module.json·style.css·script.js)로 있고, 새 부품도 폴더 하나만 더하면 된다.
+
+| 부품 | 하는 일 | 자료 |
+|---|---|---|
+| look | 서체(Pretendard)·한글 줄바꿈만 입힌다 | — |
+| toggle | 다크/라이트 버튼(자체 다크가 없으면 반전) | — |
+| history | 버전 기록 서랍, 「바뀐 곳 보기」로 신규·수정 형광 | versions |
+| sources | 접힌 출처 트레이(확인·일부·미확인) | sources |
+| verdict | 확정·추정·불가 판정 3단. 원고에서는 ```verdict 펜스 | — |
+
+```sh
+doc-template kit list
+doc-template kit apply 페이지.html -o 페이지-kit.html --with look,toggle,history --data history=기록.json
+doc-template kit remove 페이지-kit.html -o 원본.html        # 떼면 원본과 바이트까지 같다
+```
+
+이미 있는 페이지의 구조는 건드리지 않는다. 붙인 자리는 `<!--dk:start id-->…<!--dk:end id-->`로 감싸고, 다시 붙이면 바꿔 끼운다. MCP 도구는 `list_modules`·`apply_modules`·`remove_modules`.
+
 ## 공개 배포(선택)
 
 GitHub Pages가 켜진 저장소를 `DOC_TEMPLATE_PAGES_REPO=owner/repo`로 지정하면 `doc-template publish 기획.html 기획-slug`로 올리고 공개 URL을 받습니다. `gh` 로그인이 필요합니다. doc-template이 만든 HTML만 올라가고, 같은 저장소에 동시에 올리면 차례로 처리합니다. 회사 내부 문서는 공개 저장소에 올리지 마세요.
@@ -115,4 +135,6 @@ uv run --with-editable . python tests/mcp_smoke.py                         # MCP
 uv run --with-editable . python tests/test_kinds.py                        # 모음 유형 렌더·호출
 uv run --with-editable . python tests/test_publish_assets.py               # 배포 때 그림·도식 함께 올리기
 uv run --with-editable . python tests/test_ko_style.py                     # 한국어 문체 점검
+uv run --with-editable . python tests/test_kit.py                          # 부품 붙이기·떼기
+uv run --with-editable . --with playwright python tests/verify_kit.py      # 부품 브라우저 확인
 ```

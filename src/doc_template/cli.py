@@ -16,11 +16,31 @@ def main(argv=None):
     s = sub.add_parser('starter', help='시작 문서 출력'); s.add_argument('kind', choices=['plan', 'research', 'schedule', 'catalog']); s.add_argument('-o', '--out')
     pb = sub.add_parser('publish', help='GitHub Pages에 올리기'); pb.add_argument('html'); pb.add_argument('slug'); pb.add_argument('--repo')
     sub.add_parser('mcp', help='MCP 서버(stdio) 실행')
+    kt = sub.add_parser('kit', help='부품(모듈): 목록 · 아무 HTML에 붙이기 · 떼기')
+    kts = kt.add_subparsers(dest='ktcmd', required=True)
+    kts.add_parser('list', help='부품 목록과 넣을 자료 모양')
+    ka = kts.add_parser('apply', help='HTML에 부품 붙이기(원본 구조는 그대로, 다시 붙이면 바꿔 끼움)'); ka.add_argument('html'); ka.add_argument('-o', '--out'); ka.add_argument('--with', dest='mods', required=True, help='쉼표로: look,toggle,history,sources'); ka.add_argument('--data', action='append', default=[], help='부품=자료.json (history·sources)')
+    kr2 = kts.add_parser('remove', help='붙인 부품 떼기(전부 떼면 원본과 같음)'); kr2.add_argument('html'); kr2.add_argument('-o', '--out'); kr2.add_argument('--only', help='쉼표로 일부만')
     k = sub.add_parser('kinds', help='문서 템플릿 모음 유형 렌더(prd·research·catalog·schedule·minutes·pt)')
     ks = k.add_subparsers(dest='kcmd', required=True)
     kr = ks.add_parser('render', help='원고를 유형 디자인으로'); kr.add_argument('kind'); kr.add_argument('src'); kr.add_argument('-o', '--out'); kr.add_argument('--theme'); kr.add_argument('--font')
     ks.add_parser('call', help='표준 입력 JSON {fn, args, kwargs} → 표준 출력 JSON {result} (스튜디오·모음 페이지 연결용)')
     a = p.parse_args(argv)
+    if a.cmd == 'kit':
+        from . import modules as _M
+        if a.ktcmd == 'list':
+            print(json.dumps(_M.catalog(), ensure_ascii=False, indent=1)); return
+        src = Path(a.html); page = src.read_text(encoding='utf-8')
+        if a.ktcmd == 'apply':
+            data = {}
+            for kv in a.data:
+                k_, _, f_ = kv.partition('=')
+                data[k_.strip()] = json.loads(Path(f_).read_text(encoding='utf-8'))
+            out_html = _M.apply(page, [m.strip() for m in a.mods.split(',') if m.strip()], data)
+        else:
+            out_html = _M.remove(page, [m.strip() for m in a.only.split(',')] if a.only else None)
+        out = Path(a.out or src); out.write_text(out_html, encoding='utf-8')
+        print(json.dumps({'out': str(out.resolve()), 'bytes': len(out_html.encode())}, ensure_ascii=False)); return
     if a.cmd == 'kinds':
         from .kinds import call as _kcall
         if a.kcmd == 'render':
