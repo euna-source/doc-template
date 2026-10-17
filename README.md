@@ -113,6 +113,7 @@ echo '{"fn":"render","args":["# 제목\n","pt"]}' | doc-template kinds call   # 
 | history | 버전 기록 서랍, 「바뀐 곳 보기」로 신규·수정 형광 | versions |
 | sources | 접힌 출처 트레이(확인·일부·미확인) | sources |
 | verdict | 확정·추정·불가 판정 3단. 원고에서는 ```verdict 펜스 | — |
+| table | 표 반응형: 칸 안 낱말을 쪼개지 않고, 폭이 모자라면 줄마다 카드로 쌓는다(머리글이 칸 이름표). 원본 표 모양은 그대로 두고, 템플릿 표(`dk-frame`)만 칸 선을 다시 그어 병합 칸에서도 선이 끊기지 않는다. 유형 렌더(kinds)의 표는 기본으로 쓴다 | — |
 
 ```sh
 doc-template kit list
@@ -133,6 +134,7 @@ uv run --with-editable . --with playwright python tests/verify_render.py   # 11�
 uv run --with-editable . python tests/test_safety.py                       # 주입·경로·덮어쓰기
 uv run --with-editable . python tests/mcp_smoke.py                         # MCP 도구 호출
 uv run --with-editable . python tests/test_kinds.py                        # 모음 유형 렌더·호출
+uv run --with-editable . --with playwright python tests/verify_tables.py 페이지.html …   # 표 깨짐(넘침·잘림·선 끊김) 320~1440px × chrome·webkit
 uv run --with-editable . python tests/test_publish_assets.py               # 배포 때 그림·도식 함께 올리기
 uv run --with-editable . python tests/test_ko_style.py                     # 한국어 문체 점검
 uv run --with-editable . python tests/test_kit.py                          # 부품 붙이기·떼기

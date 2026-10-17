@@ -121,4 +121,19 @@ def publish(html_path, slug, repo=None, message=None, wait=90):
         except Exception:
             pass
         time.sleep(8)
+    _record(slug, url, src)
     return {'url': url, 'changed': changed, 'live': live, 'files': files}
+
+
+def _record(slug, url, src):
+    """배포 기록(이 Mac 안) — 문서 스튜디오 문서함이 이 기록으로 「직접 편집 → 정본 배포」를 잇는다. 실패해도 배포는 그대로."""
+    import json
+    p = Path(os.environ.get('DOC_TEMPLATE_PUBLISHED', Path.home() / '.local/share/doc-template/published.json'))
+    try:
+        data = json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}
+        m = re.search(r'<title>(.*?)</title>', Path(src).read_text(encoding='utf-8', errors='replace')[:6000], re.S)
+        data.setdefault('docs', {})[slug] = {'url': url, 'html': str(src), 'title': _html.unescape(m.group(1)).strip() if m else slug, 'at': time.strftime('%Y-%m-%dT%H:%M:%S')}
+        p.parent.mkdir(parents=True, exist_ok=True); tmp = p.with_suffix('.tmp')
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8'); tmp.replace(p)
+    except (OSError, ValueError):
+        pass

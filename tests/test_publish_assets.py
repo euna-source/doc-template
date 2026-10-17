@@ -5,6 +5,7 @@ from doc_template.render import render
 from doc_template.publish import assets, publish
 
 t = Path(tempfile.mkdtemp())
+os.environ['DOC_TEMPLATE_PUBLISHED'] = str(t / 'published.json')   # 시험이 이 Mac의 배포 기록을 건드리지 않게
 doc = t / 'doc'; (doc / 'img').mkdir(parents=True)
 (doc / 'img' / 'flow.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
 (doc / 'shot one.png').write_bytes(b'\x89PNG\r\n')
@@ -41,4 +42,6 @@ listed = subprocess.run(['git', '--git-dir', str(bare), 'ls-tree', '-r', '--name
 assert 'figure-doc/img/flow.svg' not in listed, listed
 body = subprocess.run(['git', '--git-dir', str(bare), 'show', 'main:figure-doc/index.html'], capture_output=True, text=True, check=True).stdout
 assert '본문 자리' in body, 'index.html은 문서 자신이어야 한다'
+import json
+assert json.loads((t / 'published.json').read_text())['docs']['figure-doc']['title'] == '그림 문서', '배포 기록'
 print('PASS publish assets: relative images and diagram html only, committed to pages repo')

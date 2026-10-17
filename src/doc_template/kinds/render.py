@@ -120,9 +120,9 @@ def parse(md):
                 if not all(re.fullmatch(r':?-{2,}:?', c) for c in r if c): rows.append(r)
                 i += 1
             if rows:
-                head = ''.join(f'<th>{inline(c)}</th>' for c in rows[0])
+                head = ''.join(f'<th scope="col">{inline(c)}</th>' for c in rows[0])
                 body = ''.join('<tr>' + ''.join(f'<td>{inline(c)}</td>' for c in r) + '</tr>' for r in rows[1:])
-                out(f'<div class="tw"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
+                out(f'<div class="tw dk-table dk-frame"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
             continue
         m = re.match(r'(\s*)([-*]|\d+\.)\s+(.*)', ln)
         if m:
@@ -338,10 +338,15 @@ def _render(md, tpl, standalone, note, theme, font):
     js = '''<script>document.querySelectorAll('[data-f]').forEach(inp=>{const sec=inp.closest('.sb'),rows=[...sec.querySelectorAll('tbody tr')],n=sec.querySelector('[data-n]');const up=()=>{const q=inp.value.trim().toLowerCase();let c=0;rows.forEach(r=>{const ok=!q||r.textContent.toLowerCase().includes(q);r.hidden=!ok;c+=ok});n.textContent=c+'행'};inp.addEventListener('input',up);up()})</script>'''
     if not standalone:
         return body
+    tcss = tjs = ''
+    if 'dk-table' in body:   # 표 반응형 부품(선 끊김·잘림 없이, 좁으면 카드로)
+        from .. import modules as _M
+        _m, tcss, _j = _M._mod('table'); tjs = f'<script data-dk="table">{_j}</script>'
+        tcss = '\n' + tcss
     return (f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{e(re.sub("<[^>]+>", "", title))}</title><meta name="robots" content="noindex">'
             '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">'
-            f'<style>{CSS}</style>{_themes.style(theme, font)}</head><body class="t-{e(tpl)}">{note}{body}{js}</body></html>')
+            f'<style>{CSS}{tcss}</style>{_themes.style(theme, font)}</head><body class="t-{e(tpl)}">{note}{body}{js}{tjs}</body></html>')
 
 
 if __name__ == '__main__':

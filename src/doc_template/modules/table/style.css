@@ -1,0 +1,27 @@
+/* 표 반응형.
+   .dk-table  : 원본 모양은 그대로 두고 ① 칸 안 낱말(어절)을 쪼개지 않게 ② 폭이 모자라면 줄마다 카드로 쌓는다(덧대기).
+   .dk-frame  : 템플릿이 모양을 정하는 표 — 칸마다 위·왼쪽 선만 긋고 바깥 틀은 감싸개가 그려 병합 칸에서도 선이 끊기지 않는다. */
+.dk-table{--dk-tl:var(--line,#E5E5EA);--dk-tf:var(--frame,var(--line2,var(--line,#D9D9DE)));--dk-th:var(--sunken,#F6F6F8);--dk-tm:var(--fg2,var(--muted,#6B6B73));
+  position:relative;box-sizing:border-box;max-width:100%;min-width:0}
+.dk-table:not(.dk-stack)>table :is(th,td),.dk-table:not(.dk-stack)>table :is(th,td) *{overflow-wrap:normal!important;word-break:keep-all!important}
+.dk-table img{max-width:100%;height:auto}
+.dk-table tr[hidden]{display:none!important}
+/* 틀 */
+.dk-table.dk-frame{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border:1px solid var(--dk-tf);border-radius:var(--r,12px);background:var(--bg,transparent)}
+.dk-frame>table{border-collapse:separate!important;border-spacing:0!important;width:calc(100% + 1px)!important;min-width:0!important;max-width:none!important;margin:-1px 0 0 -1px!important;table-layout:auto}
+.dk-frame>table>*>tr>:is(th,td),.dk-frame>table>tr>:is(th,td){border:0!important;border-top:1px solid var(--dk-tl)!important;border-left:1px solid var(--dk-tl)!important;white-space:normal!important;box-sizing:border-box}
+/* 쌓기: 줄 하나가 카드 하나 */
+.dk-table.dk-stack{overflow:visible}
+.dk-table.dk-stack>table,.dk-table.dk-stack>table>:is(thead,tbody,tfoot),.dk-table.dk-stack>table>*>tr,.dk-table.dk-stack>table>tr{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;box-sizing:border-box}
+.dk-table.dk-stack>table>:is(caption,colgroup){display:block}
+.dk-table.dk-stack>table>colgroup{display:none}
+.dk-table.dk-stack>table>*>tr,.dk-table.dk-stack>table>tr{border-top:1px solid var(--dk-tl);padding:6px 0}
+.dk-table.dk-stack>table>*>tr.dk-first,.dk-table.dk-stack>table>tr.dk-first{border-top:0}
+.dk-table.dk-stack>table>*>tr.dk-head,.dk-table.dk-stack>table>tr.dk-head{display:none!important}
+.dk-table.dk-stack>table>*>tr>:is(th,td),.dk-table.dk-stack>table>tr>:is(th,td){display:block!important;width:auto!important;min-width:0!important;max-width:100%!important;border:0!important;padding:6px 14px!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere;position:static!important}
+.dk-table.dk-stack :is(th,td)[data-dk-label]::before{content:attr(data-dk-label);display:block;margin-bottom:2px;font-size:12px;line-height:1.5;font-weight:600;color:var(--dk-tm)}
+.dk-table.dk-stack .dk-title{font-weight:700}
+.dk-table.dk-stack .dk-grp{margin:-6px 0 4px!important;padding:10px 14px!important;background:var(--dk-th);font-weight:700}
+.dk-table.dk-stack :is(th,td):empty{display:none!important}
+.dk-table[tabindex]:focus-visible{outline:2px solid var(--accent,#2B59C3);outline-offset:2px}
+@media print{.dk-table.dk-frame{overflow:visible}.dk-table :is(th,td),.dk-table :is(th,td) *{overflow-wrap:anywhere!important}}
