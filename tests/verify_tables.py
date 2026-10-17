@@ -61,7 +61,7 @@ def main():
         for bname in a.browsers.split(','):
             b = p.chromium.launch(channel='chrome') if bname == 'chrome' else p.webkit.launch()
             for f in a.files:
-                url = Path(f).resolve().as_uri()
+                url = f if f.startswith(('http://', 'https://')) else Path(f).resolve().as_uri()   # 공개 주소도 그대로 검사
                 for w in widths:
                     pg = b.new_page(viewport={'width': w, 'height': 900})
                     pg.goto(url); pg.wait_for_timeout(700)
@@ -72,7 +72,7 @@ def main():
                         if t['clip'] and not any(c in (t.get('clipCls') or '') for c in allow): probs.append(f'표{t["i"]} 잘림 {t["clip"]}px')
                         if t['gaps']: probs.append(f'표{t["i"]} 선 끊김 {len(t["gaps"])}곳 ({t["gaps"][0]})')
                         if t['spill']: probs.append(f'표{t["i"]} 칸 넘침 {len(t["spill"])}곳')
-                    tag = f'{bname} {w}px {Path(f).parent.name}/{Path(f).name}'
+                    tag = f'{bname} {w}px ' + (f if f.startswith('http') else f'{Path(f).parent.name}/{Path(f).name}')
                     if probs:
                         fails += 1; print('FAIL', tag, '·', '; '.join(probs[:4]), flush=True)
                         if a.shots:
