@@ -1,4 +1,4 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
-body{font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif!important;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
+@font-face{font-family:"NanumBarunGothicWeb";src:url("https://euna-source.github.io/public-pages/nanum-doc-font-compare/NanumBarunGothicWeb.woff2") format("woff2"),url("https://cdn.jsdelivr.net/gh/moonspam/NanumBarunGothic@1.0/NanumBarunGothicSubset.woff") format("woff");font-weight:400;font-display:swap}@font-face{font-family:"NanumBarunGothicWeb";src:url("https://euna-source.github.io/public-pages/nanum-doc-font-compare/NanumBarunGothicWebBold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/gh/moonspam/NanumBarunGothic@1.0/NanumBarunGothicBoldSubset.woff") format("woff");font-weight:700 900;font-display:swap}
+body{font-family:"NanumBarunGothicWeb",NanumBarunGothic,"Apple SD Gothic Neo","Malgun Gothic",sans-serif!important;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
 body :is(input,button,select,textarea){font-family:inherit}
 body :is(code,pre,kbd,samp){font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace!important}

@@ -1,5 +1,5 @@
 
-.hbtns,.share-toast,#copy-dialog{--bg:#fff;--surface:#F5F5F5;--subtle:#EBEBEB;--tb-line:#D9D9D9;--t1:#181818;--t2:#444;--t3:#666;--radius-s:6px;--brand-text:#067D14;--shadow:0 1px 2px rgba(24,24,24,.06),0 8px 24px rgba(24,24,24,.06);--font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+.hbtns,.share-toast,#copy-dialog{--bg:#fff;--surface:#F5F5F5;--subtle:#EBEBEB;--tb-line:#D9D9D9;--t1:#181818;--t2:#444;--t3:#666;--radius-s:6px;--brand-text:#067D14;--shadow:0 1px 2px rgba(24,24,24,.06),0 8px 24px rgba(24,24,24,.06);--font:"NanumBarunGothicWeb",NanumBarunGothic,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 .head{border-bottom:0;padding-bottom:0}
 .hbtns{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:20px;padding:10px 0;border-bottom:1px solid var(--subtle)}
 .head .action-help{font:400 12px/1.5 var(--font);color:var(--t3);margin:0}

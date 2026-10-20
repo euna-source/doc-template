@@ -148,7 +148,7 @@ def parse(md):
 CSS = '''
 :root{--bg:#fff;--sunken:#F7F7F8;--desk:#F2F2F4;--fg:#121212;--fg2:#3F3F46;--fg3:#6B6B73;--line:#EAEAED;--line2:#DEDEE2;--brand:#07ED21;--brand-ink:#067D14;--brand-soft:#DCFCE0;--mod-ink:#A63F08;--mod-soft:#FFE8D6;color-scheme:light}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 "Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 "NanumBarunGothicWeb",NanumBarunGothic,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 .hint{color:#9A9AA3;font-style:normal;background:repeating-linear-gradient(90deg,transparent 0 3px,transparent 3px 6px)}
 code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--sunken);padding:1px 5px;border-radius:4px}
@@ -268,7 +268,7 @@ KINDS = ('prd', 'research', 'catalog', 'schedule', 'minutes', 'pt')
 
 
 def render(md, tpl, standalone=True, note='', theme=None, font=None, transcript=None, canonical_url=None):
-    """tpl: KINDS 중 하나(prd=기획서형 개발요건정의서). theme: themes.themes()의 id(c8·paper·t1~t6·mono), font: sans·serif-head·serif"""
+    """tpl: KINDS 중 하나(prd=기획서형 개발요건정의서). theme: themes.themes()의 id(c8·paper·t1~t6·mono), font: nanum-barun(기본)·nanum-square·sans·serif-head·serif"""
     if tpl not in KINDS:
         raise ValueError(f'유형은 {" · ".join(KINDS)} 중 하나(기획서형은 prd — 엔진의 plan은 기획안 문서다)')
     tpl = 'plan' if tpl == 'prd' else tpl
@@ -345,7 +345,6 @@ def _render(md, tpl, standalone, note, theme, font):
         tcss = '\n' + tcss
     return (f'<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{e(re.sub("<[^>]+>", "", title))}</title><meta name="robots" content="noindex">'
-            '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">'
             f'<style>{CSS}{tcss}</style>{_themes.style(theme, font)}</head><body class="t-{e(tpl)}">{note}{body}{js}{tjs}</body></html>')
 
 

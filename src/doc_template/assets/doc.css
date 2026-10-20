@@ -3,9 +3,11 @@
    색은 테마가 넣는다(/*@THEME*/). 역할: bg panel line text muted accent mark marktext link linkline obi obitext
    근거 번호 [L##]는 UX 리서치 장부. 시그니처: 절마다 반복되는 타공 헤어라인(하라 켄야의 타공 금속 사인).
    ───────────────────────────────────────────── */
+@font-face{font-family:"NanumBarunGothicWeb";src:url("https://euna-source.github.io/public-pages/nanum-doc-font-compare/NanumBarunGothicWeb.woff2") format("woff2"),url("https://cdn.jsdelivr.net/gh/moonspam/NanumBarunGothic@1.0/NanumBarunGothicSubset.woff") format("woff");font-weight:400;font-display:swap}@font-face{font-family:"NanumBarunGothicWeb";src:url("https://euna-source.github.io/public-pages/nanum-doc-font-compare/NanumBarunGothicWebBold.woff2") format("woff2"),url("https://cdn.jsdelivr.net/gh/moonspam/NanumBarunGothic@1.0/NanumBarunGothicBoldSubset.woff") format("woff");font-weight:700 900;font-display:swap}
 :root{
-  --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  --serif:"Noto Serif KR","AppleMyungjo","Nanum Myeongjo","Batang",serif;
+  /* 기본 서체 = 나눔바른고딕(2026-10-20 사용자 결정 · 본문·제목 모두) */
+  --sans:"NanumBarunGothicWeb",NanumBarunGothic,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --serif:"NanumBarunGothicWeb",NanumBarunGothic,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
   /* 글자 [L30·L33·L34·L72·L73] */
   --fs-body:1.125rem; --lh-body:1.7;

@@ -108,7 +108,7 @@ echo '{"fn":"render","args":["# 제목\n","pt"]}' | doc-template kinds call   # 
 
 | 부품 | 하는 일 | 자료 |
 |---|---|---|
-| look | 서체(Pretendard)·한글 줄바꿈만 입힌다 | — |
+| look | 서체(나눔바른고딕)·한글 줄바꿈만 입힌다 | — |
 | toggle | 다크/라이트 버튼(자체 다크가 없으면 반전) | — |
 | history | 버전 기록 서랍, 「바뀐 곳 보기」로 신규·수정 형광 | versions |
 | sources | 접힌 출처 트레이(확인·일부·미확인) | sources |

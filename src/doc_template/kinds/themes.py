@@ -15,7 +15,7 @@ MONO = {'name': '흑백 기본', 'note': '검정과 흰색만', 'light': dict(
 
 FONTS = {
     'nanum-square': {'name': '나눔스퀘어', 'note': '네이버 · 문서 서체 확정안(9/23)'},
-    'nanum-barun': {'name': '나눔바른고딕', 'note': '네이버 · 비교 후보'},
+    'nanum-barun': {'name': '나눔바른고딕', 'note': '네이버 · 기본 서체(10/20)'},
     'sans': {'name': '고딕', 'note': 'Pretendard — 본문·제목 모두'},
     'serif-head': {'name': '제목 명조', 'note': '제목만 Noto Serif KR, 본문 Pretendard'},
     'serif': {'name': '명조', 'note': '본문까지 Noto Serif KR'},
@@ -23,16 +23,19 @@ FONTS = {
 SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif'
 SERIF = '"Noto Serif KR","AppleMyungjo","Nanum Myeongjo",serif'
 SERIF_LINK = 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;800&display=swap'
+SANS_LINK = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'
 # 네이버 나눔 웹폰트 — 원본 그대로 공개 페이지에 올려 둔 파일(FONT-LICENSE 동봉, 9/23 서체 비교·밀도 제안)
 _NSQ = 'https://euna-source.github.io/public-pages/doc-density-proposal/'
 _NBG = 'https://euna-source.github.io/public-pages/nanum-doc-font-compare/'
+_NBG_CDN = 'https://cdn.jsdelivr.net/gh/moonspam/NanumBarunGothic@1.0/'  # 공개 페이지가 없어질 때 받치는 사본
+DEFAULT_FONT = 'nanum-barun'  # 2026-10-20 사용자 결정 — 서체를 고르지 않으면 나눔바른고딕
 NANUM_FACE = {
     'nanum-square': ('NanumSquare', ''.join(
         f'@font-face{{font-family:"NanumSquare";src:url("{_NSQ}NanumSquare{f}.woff") format("woff");font-weight:{w};font-display:swap}}'
         for f, w in (('L', 300), ('R', 400), ('B', 700), ('EB', 800)))),
     'nanum-barun': ('NanumBarunGothicWeb', ''.join(
-        f'@font-face{{font-family:"NanumBarunGothicWeb";src:url("{_NBG}{f}") format("woff2");font-weight:{w};font-display:swap}}'
-        for f, w in (('NanumBarunGothicWeb.woff2', 400), ('NanumBarunGothicWebBold.woff2', 700)))),
+        f'@font-face{{font-family:"NanumBarunGothicWeb";src:url("{_NBG}{f}") format("woff2"),url("{_NBG_CDN}{c}") format("woff");font-weight:{w};font-display:swap}}'
+        for f, c, w in (('NanumBarunGothicWeb.woff2', 'NanumBarunGothicSubset.woff', 400), ('NanumBarunGothicWebBold.woff2', 'NanumBarunGothicBoldSubset.woff', '700 900')))),
 }
 
 
@@ -72,22 +75,25 @@ def vars_css(tid):
 
 
 def style(theme=None, font=None):
-    """문서 <head>에 넣을 조각. 배색 생략은 흑백이며 명시한 배색은 그대로 적용한다."""
+    """문서 <head>에 넣을 조각. 배색 생략은 흑백이며 명시한 배색은 그대로 적용한다. 서체 생략은 나눔바른고딕."""
     parts, link = [], ''
+    font = font or DEFAULT_FONT
     theme = 'mono' if theme is None or theme == '' else theme
     if theme:
         parts.append(f':root,:root[data-theme]{{{vars_css(theme)}}}body{{background:var(--bg);color:var(--fg,var(--text))}}')
+    if font in ('sans', 'serif-head', 'serif'):  # Pretendard를 고른 경로는 어느 렌더 경로든 여기서 직접 불러온다
+        link = f'<link rel="stylesheet" href="{SANS_LINK}">'
     if font in ('serif-head', 'serif'):
-        link = f'<link rel="stylesheet" href="{SERIF_LINK}">'
+        link += f'<link rel="stylesheet" href="{SERIF_LINK}">'
         parts.append(f'h1,h2,h3,.mast{{font-family:{SERIF}!important;letter-spacing:0}}')
-        if font == 'serif': parts.append(f'body,p,li,td,th{{font-family:{SERIF}!important}}')
+        parts.append(f'body,p,li,td,th{{font-family:{SERIF if font == "serif" else SANS}!important}}')
     elif font in NANUM_FACE:
         fam, face = NANUM_FACE[font]
         stack = f'"{fam}","Apple SD Gothic Neo",sans-serif'
         parts.append(face + f'body,h1,h2,h3,p,li,td,th,.mast{{font-family:{stack}!important;font-synthesis:none}}:root{{--sans:{stack};--serif:{stack}}}')
     elif font == 'sans':
         parts.append(f'body,h1,h2,h3,p,li,td,th{{font-family:{SANS}!important}}:root{{--serif:{SANS}}}')
-    return (link + f'<style id="doc-theme">{"".join(parts)}</style>') if parts else ''
+    return (link + f'<style id="doc-theme">{"".join(parts)}</style>') if parts else link
 
 
 def catalog():

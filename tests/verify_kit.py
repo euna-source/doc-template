@@ -15,7 +15,7 @@ with sync_playwright() as p:
     for w in (1280, 390):
         pg = b.new_page(viewport={'width': w, 'height': 800}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(f.as_uri()); pg.wait_for_timeout(300)
-        ok('Pretendard' in pg.evaluate('getComputedStyle(document.body).fontFamily'), f'{w}: 룩 — 서체')
+        ok('NanumBarunGothic' in pg.evaluate('getComputedStyle(document.body).fontFamily'), f'{w}: 룩 — 서체')
         ok(pg.locator('mark.dk-chg').count() == 0, f'{w}: 바뀐 곳 형광은 기본 꺼짐')
         pg.click('.dk-hbtn'); ok(pg.locator('.dk-hpanel').is_visible(), f'{w}: 버전 기록 서랍 열림')
         pg.check('.dk-show'); ok(pg.locator('mark.dk-chg[data-type=new]').count() == 1 and pg.locator('mark.dk-chg[data-type=mod]').count() == 1, f'{w}: 바뀐 곳 형광 신규·수정')
